@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="Interactive Simulator of the Multi-Array Queue">
+<title>Interactive Simulator of the Multi-Array Queue</title>
+<style>
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  color: #24292e;
+  background-color: #fdfdfd;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-feature-settings: "kern" 1;
+  -moz-font-feature-settings: "kern" 1;
+  -o-font-feature-settings: "kern" 1;
+  font-feature-settings: "kern" 1;
+  font-kerning: normal;
+  padding-right: 30px;
+  padding-left: 30px;
+}
+canvas {
+  margin-bottom: 40px;
+}
+button {
+  padding: 10px;
+  margin-right: 20px;
+}
+p.remark {
+  margin-top: 20px;
+  font-size: small;
+  line-height: 1.5;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Interactive Simulator of the Multi-Array Queue</h1>
+<h4>Contains simplified versions of the algorithms (Constructor parameters: initialCapacity = 0, cntAllowedExtensions = 4)</h4>
+<canvas id="canv" width="540" height="570"></canvas>
+<br>
+<button id="start_again" onclick="start_again()">Start again</button>
+<button id="enqueue" onclick="remark(null); enqueue()"><b>Enqueue</b></button>
+<button id="dequeue" onclick="remark(null); dequeue()"><b>Dequeue</b></button>
+<button id="enqueue_dequeue" onclick="remark(null); enqueue(); dequeue()"><b>Enqueue + Dequeue</b></button>
+<button id="play_scenario" onclick="play_scenario()"><b>Play a scenario with microbursts on enqueue side</b></button>
+<div id="info"></div>
+
+<script>
+  "use strict"
+  const canv = document.getElementById("canv")
+  const info = document.getElementById("info")
+  const ctx = canv.getContext("2d")
+  var remText
+  // ----------------------
+  function remark( t ) {
+    if (!t) {
+      remText = null
+      info.innerHTML = ''
+    } else {
+      if (remText) remText += " " + t
+      else         remText = t
+      info.innerHTML = '<p class="remark">' + remText
+    }
+  }
+  function assertionError( t ) {
+    remark('<span style="color:#FF0000; font-weight:bold;">' + t + '</span>')
+  }
+  function resultAttention( t ) {
+    remark('<span style="color:#0000FF; font-weight:bold;">' + t + '</span>')
+  }
+  function result( t ) {
+    remark('<span style="font-weight:bold;">' + t + '</span>')
+  }
+  // ----------------------
+  const leftOff = 50
+  const objSize = 30
+  const divDist = 12
+  const bottOff = divDist * 5
+  const arrDist = divDist * 6 + objSize
+
+  function arrow_up(x, y) {
+    ctx.lineTo( x, y )
+    ctx.lineTo( x - 3, y + 5 )
+    ctx.moveTo( x, y )
+    ctx.lineTo( x + 3, y + 5 )
+  }
+  function arrow_left(x, y ) {
+    ctx.lineTo( x, y )
+    ctx.lineTo( x + 5, y - 3 )
+    ctx.moveTo( x, y )
+    ctx.lineTo( x + 5, y + 3 )
+  }
+  function draw_object( rix, ix, full, writer, reader ) {
+    if ( full ) ctx.fillStyle = "#FF9999"
+    else        ctx.fillStyle = "#FFFFFF"
+    ctx.fillRect( leftOff + (rix * arrDist), canv.height - bottOff - objSize - (ix * objSize), objSize, objSize )
+    ctx.lineWidth = 2
+    ctx.strokeStyle = "#000000"
+    ctx.strokeRect( leftOff + (rix * arrDist), canv.height - bottOff - objSize - (ix * objSize), objSize, objSize )
+    let txt
+    if (writer && reader) txt = "WR"
+    else if (writer)      txt = "W"
+    else if (reader)      txt = "R"
+    if (txt) {
+      ctx.font = "14px Arial"
+      ctx.textAlign = "center"
+      ctx.fillStyle = "#000000"
+      ctx.fillText( txt, leftOff + (rix * arrDist) + (objSize / 2), canv.height - bottOff - objSize - (ix * objSize) + (objSize / 2) + 5)
+    }
+  }
+  function draw_diversion(dix, rix, ix) {
+    ctx.lineWidth = 1
+    ctx.strokeStyle = "#000000"
+
+    ctx.beginPath()
+    ctx.moveTo( leftOff + (rix * arrDist) + objSize                         , canv.height - bottOff - (ix * objSize)                         )
+    ctx.lineTo( leftOff + (rix * arrDist) + objSize + ((1 + dix) * divDist) , canv.height - bottOff - (ix * objSize)                         )
+    ctx.lineTo( leftOff + (rix * arrDist) + objSize + ((1 + dix) * divDist) , canv.height - bottOff + ((1 + dix) * divDist)                  )
+    ctx.lineTo( leftOff + ((1 + dix) * arrDist) + (objSize / 2)             , canv.height - bottOff + ((1 + dix) * divDist)                  )
+    arrow_up  ( leftOff + ((1 + dix) * arrDist) + (objSize / 2)             , canv.height - bottOff                                          )
+    ctx.stroke()
+
+    ctx.beginPath()
+    ctx.moveTo( leftOff + ((1 + dix) * arrDist) + (objSize / 2)             , canv.height - bottOff - ((1 << (1 + dix)) * objSize)           )
+    ctx.lineTo( leftOff + ((1 + dix) * arrDist) + (objSize / 2)             , canv.height - bottOff - ((1 << (1 + dix)) * objSize) - divDist )
+    ctx.lineTo( leftOff + (rix * arrDist) + objSize + ((1 + dix) * divDist) , canv.height - bottOff - ((1 << (1 + dix)) * objSize) - divDist )
+    ctx.lineTo( leftOff + (rix * arrDist) + objSize + ((1 + dix) * divDist) , canv.height - bottOff - (ix * objSize) - (objSize / 2)         )
+    arrow_left( leftOff + (rix * arrDist) + objSize                         , canv.height - bottOff - (ix * objSize) - (objSize / 2)         )
+    ctx.stroke()
+  }
+  // ----------------------
+  var ringsMaxIndex
+  var diversions
+  var writerPosition
+  var readerPosition
+
+  function enqueue() {
+    let isQueueExtensionPossible = (ringsMaxIndex < diversions.length)  // if there is room yet for the extension
+    let extendQueue = false
+    let writerPos = writerPosition
+    let writerRix
+    let writerIx
+
+    go_forward:
+    for (;;)
+    {
+      writerPos ++  // prospective move forward (the increment never overflows into the rix)
+      writerRix = ((writerPos & 0xFF00) >> 8)
+      writerIx  =  (writerPos & 0x00FF)
+
+      // if the prospective move goes "beyond" the end of rings[writerRix]
+      if ((1 << writerRix) == writerIx)
+      {
+        if (0 == writerRix)  // if in rings[0]
+        {
+          remark("Moved to rings[0][0].")
+          writerPos = 0
+          writerRix = 0
+          writerIx  = 0
+          // do not break here because from rings[0][0] eventually diversion(s) shall be followed forward
+        }
+        else  // i.e. we are in a "higher" rings[N]
+        {
+          remark("Followed diversion[" + (writerRix - 1) + "] back.")
+          writerPos = diversions[writerRix - 1]  // follow diversion[N-1] back
+          writerRix = ((writerPos & 0xFF00) >> 8)
+          writerIx  =  (writerPos & 0x00FF)
+
+          if (readerPosition == writerPos)  // if the prospective move has hit the reader (that is in the previous round) "from behind"
+          {
+            if (isQueueExtensionPossible)
+            {
+              assertionError("Hit reader on the return path of a diversion.")
+              return
+            }
+            else
+            {
+              resultAttention("Queue is full.")
+              return
+            }
+          }
+          break go_forward  // the prospective move forward is done, we are on the return path of a diversion
+        }
+      }
+
+      // if the prospective move reached (an entry side of) a diversion: follow it - to the beginning of respective rings[rix]
+      // (another diversion may sit there, so then continue following)
+      for (let rix = 1 + writerRix; rix <= ringsMaxIndex; rix ++)
+      {
+        if (diversions[rix - 1] == writerPos)
+        {
+          remark("Followed diversion[" + (rix - 1) + "] forward.")
+          writerPos = (rix << 8)  // move to the first element of the array of Objects the diversion leads to
+          writerRix = rix
+          writerIx  = 0
+        }
+      }
+
+      // if the prospective move has hit the reader (that is in the previous round) "from behind"
+      if (readerPosition == writerPos)
+      {
+        if (isQueueExtensionPossible)
+        {
+          remark("Extended the Queue.")
+          extendQueue = true
+        }
+        else
+        {
+          resultAttention("Queue is full.")
+          return
+        }
+      }
+
+      // the forward-looking check to prevent the next writer from hitting the reader "from behind"
+      // on the return path of a diversion (see Paper for explanation)
+      else
+      {
+        let testNextWriterPos = writerPos
+        let testNextWriterRix = writerRix
+        let testNextWriterIx = writerIx
+
+        test_next:
+        for (; (0 != testNextWriterRix) && ((1 << testNextWriterRix) == (1 + testNextWriterIx)) ;)
+        {
+          testNextWriterPos = diversions[testNextWriterRix - 1]  // follow the diversion back
+          if (readerPosition == testNextWriterPos)  // if we would hit the reader
+          {
+            if (isQueueExtensionPossible)
+            {
+              remark("Created new diversion because next writer could hit reader on the return path of a diversion.")
+              extendQueue = true
+            }
+            break test_next
+          }
+          testNextWriterRix = ((testNextWriterPos & 0xFF00) >> 8)
+          testNextWriterIx  =  (testNextWriterPos & 0x00FF)
+        }
+      }
+      break go_forward  // prospective move forward is now done
+    }
+
+    // preparations are done, start the actual work
+    if (extendQueue)
+    {
+      let rixMaxNew = 1 + ringsMaxIndex
+
+      // impossible for writerPos to be already in the diversions array, but better check ...
+      for (let rix = 1; rix <= ringsMaxIndex; rix ++)
+      {
+        if (diversions[rix - 1] == writerPos)
+        {
+          assertionError("Duplicity in the diversions array.")
+          return
+        }
+      }
+
+      diversions[rixMaxNew - 1] = writerPos  // write the new diversion = the prospective writer position
+
+      ringsMaxIndex = rixMaxNew  // increment ringsMaxIndex
+
+      draw_object( rixMaxNew, 0, true, true, false )
+      for (let ix = 1; ix < (1 << rixMaxNew); ix ++)
+      {
+        draw_object( rixMaxNew, ix, false, false, false )
+      }
+      draw_diversion( rixMaxNew - 1, writerRix, writerIx )
+      redrawOldWriterPosition( writerPosition, readerPosition )
+
+      writerPosition = (rixMaxNew << 8)  // new writer position = first array element of the new array
+    }
+    else  // no extendQueue
+    {
+      draw_object( writerRix, writerIx, true, true, false )
+      redrawOldWriterPosition( writerPosition, readerPosition )
+
+      writerPosition = writerPos  // new writer position = prospective writer position
+    }
+    result("Enqueued.")
+  }
+  function redrawOldWriterPosition( oldWriterPosition, currentReaderPosition )
+  {
+    let oldWriterRix = ((oldWriterPosition & 0xFF00) >> 8)
+    let oldWriterIx  =  (oldWriterPosition & 0x00FF)
+    if (currentReaderPosition == oldWriterPosition) {
+      draw_object( oldWriterRix, oldWriterIx, false, false, true )
+    } else {
+      draw_object( oldWriterRix, oldWriterIx, true, false, false )
+    }
+  }
+  // ----------------------
+  function dequeue() {
+    let readerPos = readerPosition
+    let readerRix
+    let readerIx
+
+    if (writerPosition == readerPos)  // the reader stands on the writer: the Queue is empty
+    {
+      resultAttention("Queue is empty.")
+      return
+    }
+
+    go_forward:
+    for (;;)
+    {
+      readerPos ++  // prospective move forward (the increment never overflows into the rix)
+      readerRix = ((readerPos & 0xFF00) >> 8)
+      readerIx  =  (readerPos & 0x00FF)
+
+      // if the prospective move goes "beyond" the end of rings[readerRix]
+      if ((1 << readerRix) == readerIx)
+      {
+        if (0 == readerRix)  // if in rings[0]
+        {
+          remark("Moved to rings[0][0].")
+          readerPos = 0
+          readerRix = 0
+          readerIx  = 0
+          // do not break here because from rings[0][0] eventually diversion(s) shall be followed forward
+        }
+        else  // i.e. we are in a "higher" rings[N]
+        {
+          remark("Followed diversion[" + (readerRix - 1) + "] back.")
+          readerPos = diversions[readerRix - 1]  // follow diversion[N-1] back
+          readerRix = ((readerPos & 0xFF00) >> 8)
+          readerIx  =  (readerPos & 0x00FF)
+          break go_forward  // the prospective move forward is done, we are on the return path of a diversion
+        }
+      }
+
+      // if the prospective move reached (an entry side of) a diversion: follow it - to the beginning of respective rings[rix]
+      // (another diversion may sit there, so then continue following)
+      for (let rix = 1 + readerRix; rix <= ringsMaxIndex; rix ++)
+      {
+        if (diversions[rix - 1] == readerPos)
+        {
+          remark("Followed diversion[" + (rix - 1) + "] forward.")
+          readerPos = (rix << 8)  // move to the first element of the array of Objects the diversion leads to
+          readerRix = rix
+          readerIx  = 0
+        }
+      }
+      break go_forward  // prospective move forward is now done
+    }
+
+    if (writerPosition == readerPos) {
+      draw_object(readerRix, readerIx, false, true, true )
+    } else {
+      draw_object(readerRix, readerIx, false, false, true )
+    }
+    redrawOldReaderPosition( readerPosition, writerPosition )
+
+    readerPosition = readerPos  // new reader position = prospective reader position
+    result("Dequeued.")
+  }
+  function redrawOldReaderPosition( oldReaderPosition, currentWriterPosition )
+  {
+    let oldReaderRix = ((oldReaderPosition & 0xFF00) >> 8)
+    let oldReaderIx  =  (oldReaderPosition & 0x00FF)
+    draw_object( oldReaderRix, oldReaderIx, false, false, false )
+  }
+  // ----------------------
+  const scenario = [+300, +300, +300, +300, -300, +100, +100, +50,  +50,  +50,
+                    +50,  +50,  +50,  +50,  +50,  +50,  +50,  +50,  +50,  +50,
+                    +50,  +50,  +50,  +50,  -200, -200, -200, -200, -200, -200,
+                    +50,  +50,  -100, -100, -100, -100, -100, -100, -100, -100,
+                    +50,  +50,  -100, -100, -100, -100, -100, -100, -100, -100,
+                    +50,  +50,  +50,  +50,  +50,  +50,  +50,  +50,  +50,  +50,
+                    -100, -100, -100, -100, -100, -100, -100, -100, -100, -100,
+                    -100, -100, -100, -100, +100, -100, +100, -100, +100, -100,
+                    +100, -100, +50,  +50,  +50,  +50,  +50,  +50,  -100, -100,
+                    -100, -100, -100, -100, +100, -100, +100, -100, +100, -100]
+  var scenario_step
+
+  function play_scenario() {
+    disable_buttons(true)
+    scenario_step = 0
+    setTimeout(play_scenario_step, Math.abs(scenario[scenario_step]))
+  }
+  function play_scenario_step() {
+    if (scenario[scenario_step] < 0) {remark(null); dequeue()}
+    else {remark(null); enqueue()}
+    scenario_step ++
+    if (scenario_step < scenario.length) {
+      setTimeout(play_scenario_step, Math.abs(scenario[scenario_step]))
+    } else {
+      disable_buttons(false)
+    }
+  }
+  function disable_buttons(disabled) {
+    document.getElementById("start_again").disabled = disabled
+    document.getElementById("enqueue").disabled = disabled
+    document.getElementById("dequeue").disabled = disabled
+    document.getElementById("enqueue_dequeue").disabled = disabled
+    document.getElementById("play_scenario").disabled = disabled
+  }
+  // ----------------------
+  function start_again() {
+    ringsMaxIndex = 0
+    diversions = [0,0,0,0]
+    writerPosition = 0
+    readerPosition = 0
+    ctx.clearRect( 0, 0, canv.width, canv.height )
+    remark(null)
+    draw_object( 0, 0, false, true, true )
+  }
+  start_again()
+</script>
+<noscript>Sorry, your browser does not support JavaScript!</noscript>
+
+</body>
+</html>
+
