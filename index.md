@@ -11,7 +11,7 @@ Performance figures are in the Paper as well.
 
 <img src="Diagram_MultiArrayQueue.png" height="600">
 
-### Interactive Simulator
+## Interactive Simulator
 
 [Get acquainted with the new Queue here](Simulator_MultiArrayQueue.html)
 
