@@ -50,11 +50,13 @@ p.remark {
 <button id="MAQ_3_2" onclick="start_again(3,2)">MAQ(3,2)</button>
 <button id="MAQ_7_1" onclick="start_again(7,1)">MAQ(7,1)</button>
 <button id="MAQ_15_0" onclick="start_again(15,0)">MAQ(15,0)</button>
+<button id="MAQ_1_0" onclick="start_again(1,0)">MAQ(1,0)</button>
+<button id="MAQ_0_0" onclick="start_again(0,0)">MAQ(0,0) corner case</button>
 <br>
 <button id="enqueue" onclick="remark(null); enqueue()"><b>Enqueue</b></button>
 <button id="dequeue" onclick="remark(null); dequeue()"><b>Dequeue</b></button>
 <button id="enqueue_dequeue" onclick="remark(null); enqueue(); dequeue()"><b>Enqueue + Dequeue</b></button>
-<button id="play_scenario" onclick="play_scenario()"><b>Play a scenario with microbursts on enqueue side</b></button>
+<button id="play_scenario" onclick="play_scenario()"><b>Play a scenario with microbursts on the Enqueue side</b></button>
 <div id="rem"></div>
 
 <script>
@@ -233,7 +235,7 @@ p.remark {
         let testNextWriterIx = writerIx
 
         test_next:
-        for (; (0 != testNextWriterRix) && ((firstArraySize << testNextWriterRix) == (1 + testNextWriterIx)) ;)
+        for (; ((0 != testNextWriterRix) && ((firstArraySize << testNextWriterRix) == (1 + testNextWriterIx))) ;)
         {
           tmpRix = testNextWriterRix
           testNextWriterRix = diversions[tmpRix - 1].rix  // follow the diversion back
@@ -404,6 +406,8 @@ p.remark {
     document.getElementById("MAQ_3_2").disabled = disabled
     document.getElementById("MAQ_7_1").disabled = disabled
     document.getElementById("MAQ_15_0").disabled = disabled
+    document.getElementById("MAQ_1_0").disabled = disabled
+    document.getElementById("MAQ_0_0").disabled = disabled
     document.getElementById("enqueue").disabled = disabled
     document.getElementById("dequeue").disabled = disabled
     document.getElementById("enqueue_dequeue").disabled = disabled
