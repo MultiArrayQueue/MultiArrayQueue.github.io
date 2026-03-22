@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="Interactive Simulator of the Lock-Free Multi-Array Queue">
+<title>Interactive Simulator of the Lock-Free Multi-Array Queue</title>
+<style>
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  color: #24292e;
+  background-color: #fdfdfd;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-feature-settings: "kern" 1;
+  -moz-font-feature-settings: "kern" 1;
+  -o-font-feature-settings: "kern" 1;
+  font-feature-settings: "kern" 1;
+  font-kerning: normal;
+  padding-right: 30px;
+  padding-left: 30px;
+}
+h1 {
+  margin-bottom: 10px;
+}
+h4 {
+  margin-top: 0px;
+  margin-bottom: 10px;
+}
+button {
+  padding: 10px;
+  margin-right: 20px;
+  margin-bottom: 10px;
+}
+button.process {
+  padding: 5px;
+  margin-top: 5px;
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+td {
+  vertical-align: top;
+}
+td.process {
+  border: 1px solid #000000;
+}
+td.process_desc {
+  width:  250px;
+  max-width: 250px;
+  height:  140px;
+  font-size: small;
+  line-height: 1.5;
+  white-space: pre;
+}
+td.process_buttons {
+  text-align: right;
+}
+span.assertMessage {
+  font-weight: bold;
+  color: red;
+}
+span.casFailedMessage {
+  font-weight: bold;
+  color: black;
+}
+span.casSucceededMessage {
+  font-weight: bold;
+  color: green;
+}
+span.casRemarkMessage {
+  font-style: italic;
+}
+span.linearizationPointMessage {
+  font-weight: bold;
+  color: blue;
+}
+span.nextStep {
+  color: darkviolet;
+}
+div.trail {
+  font-size: small;
+  line-height: 1.5;
+  white-space: pre;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Interactive Simulator of the Lock-Free Multi-Array Queue</h1>
+<h4 id="subcap"></h4>
+<table>
+  <tr>
+    <td class="process">
+      <table>
+        <tr>
+          <td class="process_desc" id="process_desc_0">
+          </td>
+          <td class="process_buttons">
+            <button class="process" id="enq_atom_step_0" onclick="enqueue_atomic_step(0)">enq. atom. step</button>
+            <button class="process" id="enq_full_0" onclick="enqueue_full(0)">enq. full</button>
+            <br>
+            <button class="process" id="deq_atom_step_0" onclick="dequeue_atomic_step(0)">deq. atom. step</button>
+            <button class="process" id="deq_full_0" onclick="dequeue_full(0)">deq. full</button>
+            <br>
+            <button class="process" id="thread_die_0" onclick="thread_die(0)">die</button>
+          </td>
+        </tr>
+      </table>
+    </td>
+    <td rowspan="4"><canvas id="canv" width="420px" height="600px"></canvas></td>
+  </tr>
+  <tr>
+    <td class="process">
+      <table>
+        <tr>
+          <td class="process_desc" id="process_desc_1">
+          </td>
+          <td class="process_buttons">
+            <button class="process" id="enq_atom_step_1" onclick="enqueue_atomic_step(1)">enq. atom. step</button>
+            <button class="process" id="enq_full_1" onclick="enqueue_full(1)">enq. full</button>
+            <br>
+            <button class="process" id="deq_atom_step_1" onclick="dequeue_atomic_step(1)">deq. atom. step</button>
+            <button class="process" id="deq_full_1" onclick="dequeue_full(1)">deq. full</button>
+            <br>
+            <button class="process" id="thread_die_1" onclick="thread_die(1)">die</button>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td class="process">
+      <table>
+        <tr>
+          <td class="process_desc" id="process_desc_2">
+          </td>
+          <td class="process_buttons">
+            <button class="process" id="enq_atom_step_2" onclick="enqueue_atomic_step(2)">enq. atom. step</button>
+            <button class="process" id="enq_full_2" onclick="enqueue_full(2)">enq. full</button>
+            <br>
+            <button class="process" id="deq_atom_step_2" onclick="dequeue_atomic_step(2)">deq. atom. step</button>
+            <button class="process" id="deq_full_2" onclick="dequeue_full(2)">deq. full</button>
+            <br>
+            <button class="process" id="thread_die_2" onclick="thread_die(2)">die</button>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td class="process">
+      <table>
+        <tr>
+          <td class="process_desc" id="process_desc_3">
+          </td>
+          <td class="process_buttons">
+            <button class="process" id="enq_atom_step_3" onclick="enqueue_atomic_step(3)">enq. atom. step</button>
+            <button class="process" id="enq_full_3" onclick="enqueue_full(3)">enq. full</button>
+            <br>
+            <button class="process" id="deq_atom_step_3" onclick="dequeue_atomic_step(3)">deq. atom. step</button>
+            <button class="process" id="deq_full_3" onclick="dequeue_full(3)">deq. full</button>
+            <br>
+            <button class="process" id="thread_die_3" onclick="thread_die(3)">die</button>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<br>
+<button id="LFMAQ_1_2" onclick="start_again(1,2)">Start again LFMAQ(1,2)</button>
+<button id="LFMAQ_5_1" onclick="start_again(5,1)">LFMAQ(5,1)</button>
+<button id="LFMAQ_10_0" onclick="start_again(10,0)">LFMAQ(10,0)</button>
+<button id="LFMAQ_1_0" onclick="start_again(1,0)">LFMAQ(1,0) corner case</button>
+<button id="random_finish_all" onclick="random_finish_all()"><b>Random finish all</b></button>
+<button id="show_trail" onclick="show_trail()">Show trail</button>
+<div class="trail" id="trail"></div>
+
+<script>
+  "use strict"
+  const subcap = document.getElementById("subcap")
+  const canv = document.getElementById("canv")
+  const ctx = canv.getContext("2d")
+  // ----------------------
+  var leftOff
+  const elemSize = 42
+  const divDist = 12
+  const bottOff = divDist * 5
+  const arrDist = divDist * 7 + elemSize
+
+  function arrow_up(x, y) {
+    ctx.lineTo( x, y )
+    ctx.lineTo( x - 3, y + 5 )
+    ctx.moveTo( x, y )
+    ctx.lineTo( x + 3, y + 5 )
+  }
+
+  function arrow_left(x, y ) {
+    ctx.lineTo( x, y )
+    ctx.lineTo( x + 5, y - 3 )
+    ctx.moveTo( x, y )
+    ctx.lineTo( x + 5, y + 3 )
+  }
+
+  function draw_element(rix, ix) {
+    // background
+    if (rings[rix][ix].full) {
+      ctx.fillStyle = "#FF9999"  // full
+    } else {
+      ctx.fillStyle = "#FFFFFF"  // empty
+    }
+    ctx.fillRect( leftOff + (rix * arrDist), canv.height - bottOff - elemSize - (ix * elemSize), elemSize, elemSize )
+    // border
+    ctx.lineWidth = 2
+    ctx.strokeStyle = "#000000"
+    ctx.strokeRect( leftOff + (rix * arrDist), canv.height - bottOff - elemSize - (ix * elemSize), elemSize, elemSize )
+    // divertToRix indicator
+    if (0 != rings[rix][ix].divertToRix) {
+      ctx.fillStyle = "#000000"
+      ctx.beginPath()
+      ctx.moveTo(leftOff + (rix * arrDist) + elemSize,      canv.height - bottOff - elemSize - (ix * elemSize) + 9)
+      ctx.lineTo(leftOff + (rix * arrDist) + elemSize + 10, canv.height - bottOff - elemSize - (ix * elemSize) + 15)
+      ctx.lineTo(leftOff + (rix * arrDist) + elemSize,      canv.height - bottOff - elemSize - (ix * elemSize) + 21)
+      ctx.closePath()
+      ctx.fill()
+    }
+    // round,value
+    let txt
+    if (rings[rix][ix].dirty) {
+      txt = rings[rix][ix].round + "," + rings[rix][ix].value
+    } else {
+      txt = "clean"
+    }
+    ctx.font = "14px Arial"
+    ctx.textAlign = "center"
+    ctx.fillStyle = "#000000"
+    ctx.fillText( txt,
+                  leftOff + (rix * arrDist) + (elemSize / 2),
+                  canv.height - bottOff - elemSize - (ix * elemSize) + 16)
+    // W,R,WR indicator
+    txt = ""
+    if ((rix == writerPositionRix) && (ix == writerPositionIx)) txt += "W"
+    if ((rix == readerPositionRix) && (ix == readerPositionIx)) txt += "R"
+    if ("" != txt) {
+      ctx.fillText( txt,
+                    leftOff + (rix * arrDist) + (elemSize / 2),
+                    canv.height - bottOff - elemSize - (ix * elemSize) + elemSize - 6)
+    }
+  }
+
+  function draw_implicit_return() {
+    ctx.lineWidth = 1
+    ctx.strokeStyle = "#000000"
+
+    ctx.beginPath()
+    ctx.moveTo( leftOff + (elemSize / 2) , canv.height - bottOff - (FIRST_ARRAY_SIZE * elemSize)           )
+    ctx.lineTo( leftOff + (elemSize / 2) , canv.height - bottOff - (FIRST_ARRAY_SIZE * elemSize) - divDist )
+    ctx.lineTo( leftOff - (2 * divDist)  , canv.height - bottOff - (FIRST_ARRAY_SIZE * elemSize) - divDist )
+    ctx.lineTo( leftOff - (2 * divDist)  , canv.height - bottOff + divDist                                 )
+    ctx.lineTo( leftOff + (elemSize / 2) , canv.height - bottOff + divDist                                 )
+    arrow_up  ( leftOff + (elemSize / 2) , canv.height - bottOff + 1                                       )
+    ctx.stroke()
+  }
+
+  function draw_diversion(divertToRix, rix, ix) {
+    if ((0 == rix) && (0 == ix)) {
+      if (diversion_0_0_drawn) return  // the CAS in diversions[] for diversion at (0,0) may succeed multiple times, but draw only once
+      diversion_0_0_drawn = true
+    }
+    ctx.lineWidth = 1
+    ctx.strokeStyle = "#000000"
+
+    ctx.beginPath()
+    ctx.moveTo( leftOff + (rix * arrDist) + elemSize + 10                            , canv.height - bottOff - elemSize - (ix * elemSize) + 15 )
+    ctx.lineTo( leftOff + (rix * arrDist) + elemSize + ((1 + divertToRix) * divDist) , canv.height - bottOff - elemSize - (ix * elemSize) + 15 )
+    ctx.lineTo( leftOff + (rix * arrDist) + elemSize + ((1 + divertToRix) * divDist) , canv.height - bottOff + (divertToRix * divDist)         )
+    ctx.lineTo( leftOff + (divertToRix * arrDist) + (elemSize / 2)                   , canv.height - bottOff + (divertToRix * divDist)         )
+    arrow_up  ( leftOff + (divertToRix * arrDist) + (elemSize / 2)                   , canv.height - bottOff + 1                               )
+    ctx.stroke()
+
+    ctx.beginPath()
+    ctx.moveTo( leftOff + (divertToRix * arrDist) + (elemSize / 2)                   , canv.height - bottOff - ((FIRST_ARRAY_SIZE << divertToRix) * elemSize)           )
+    ctx.lineTo( leftOff + (divertToRix * arrDist) + (elemSize / 2)                   , canv.height - bottOff - ((FIRST_ARRAY_SIZE << divertToRix) * elemSize) - divDist )
+    ctx.lineTo( leftOff + (rix * arrDist) + elemSize + ((1 + divertToRix) * divDist) , canv.height - bottOff - ((FIRST_ARRAY_SIZE << divertToRix) * elemSize) - divDist )
+    ctx.lineTo( leftOff + (rix * arrDist) + elemSize + ((1 + divertToRix) * divDist) , canv.height - bottOff - elemSize - (ix * elemSize)                               )
+    arrow_left( leftOff + (rix * arrDist) + elemSize + 1                             , canv.height - bottOff - elemSize - (ix * elemSize)                               )
+    ctx.stroke()
+  }
+
+  function draw_positions() {
+    ctx.clearRect( 20, 20, 270, 50 )
+    ctx.font = "14px Arial"
+    ctx.textAlign = "left"
+    ctx.fillStyle = "#000000"
+    ctx.fillText( "writerPosition(round,rix,ix) = (" + writerPositionRound + "," + writerPositionRix + "," + writerPositionIx + ")",
+                  30, 40 )
+    ctx.fillText( "readerPosition(round,rix,ix) = (" + readerPositionRound + "," + readerPositionRix + "," + readerPositionIx + ")",
+                  30, 60 )
+  }
+
+  // ----------------------
+  // private data of the Queue
+  var FIRST_ARRAY_SIZE
+  var CNT_ALLOWED_EXTENSIONS
+  var MAXIMUM_CAPACITY
+  var writerPositionRound
+  var writerPositionRix
+  var writerPositionIx
+  var readerPositionRound
+  var readerPositionRix
+  var readerPositionIx
+  var rings
+  var diversions
+  var diversion_0_0_drawn
+
+  var ps  // per-process states
+  var atomicSteps = {}  // the atomic steps, indexed by their goto labels
+
+  var cntEnqueued  // verification data
+  var cntDequeued
+  var assertMessage
+  var casFailedMessage
+  var casSucceededMessage
+  var casRemarkMessage
+  var linearizationPointMessage
+  var trail
+
+  // enqueue steps
+  //
+  // The primary source of explanations and comments on the Lock-Free Multi-Array Queue algorithms
+  // is the Promela model for Spin.
+
+  atomicSteps["enqueue_read_writer"] = function (pid) {
+    ps[pid].origWriterRound = writerPositionRound
+    ps[pid].origWriterRix   = writerPositionRix
+    ps[pid].origWriterIx    = writerPositionIx
+    ps[pid].writerRound = ps[pid].origWriterRound
+    ps[pid].writerRix   = ps[pid].origWriterRix
+    ps[pid].writerIx    = ps[pid].origWriterIx
+    assert(10000, ps[pid].writerIx < (FIRST_ARRAY_SIZE << ps[pid].writerRix))
+    ps[pid].nextStep = "enqueue_read_reader"
+  }
+
+  atomicSteps["enqueue_read_reader"] = function (pid) {
+    ps[pid].readerRound = readerPositionRound
+    ps[pid].readerRix   = readerPositionRix
+    ps[pid].readerIx    = readerPositionIx
+    assert(10100, ps[pid].readerIx < (FIRST_ARRAY_SIZE << ps[pid].readerRix))
+    assert(10110, ps[pid].writerRound <= (1 + ps[pid].readerRound))
+
+    if ((ps[pid].writerRound == (1 + ps[pid].readerRound))
+     && (ps[pid].writerRix == ps[pid].readerRix)
+     && (ps[pid].writerIx == ps[pid].readerIx))
+    {
+      assert(10120, (1 + rings[ps[pid].writerRix][ps[pid].writerIx].round) == ps[pid].writerRound)
+      assert(10130, "undefined" !== typeof rings[CNT_ALLOWED_EXTENSIONS])
+      linearizationPointMessage = "Linearization Point for Queue full"
+      assert(10140, MAXIMUM_CAPACITY == (cntEnqueued - cntDequeued))
+      ps[pid].nextStep = "enqueue_done"
+    } else {
+      ps[pid].nextStep = "enqueue_read_element"
+    }
+  }
+
+  atomicSteps["enqueue_read_element"] = function (pid) {
+    assert(10200, ("undefined" !== typeof rings[ps[pid].writerRix]) && (ps[pid].writerIx < rings[ps[pid].writerRix].length))
+    ps[pid].elementValue       = rings[ps[pid].writerRix][ps[pid].writerIx].value
+    ps[pid].elementRound       = rings[ps[pid].writerRix][ps[pid].writerIx].round
+    ps[pid].elementDirty       = rings[ps[pid].writerRix][ps[pid].writerIx].dirty
+    ps[pid].elementDivertToRix = rings[ps[pid].writerRix][ps[pid].writerIx].divertToRix
+    assert(10210, (ps[pid].writerRound <= (1 + ps[pid].elementRound)) || (false == ps[pid].elementDirty))
+    ps[pid].divertToRixNew = 0
+    ps[pid].linearized = false
+    ps[pid].elementCasAssert = true
+
+    if ((ps[pid].writerRound != (1 + ps[pid].elementRound)) && ps[pid].elementDirty) {
+      ps[pid].nextStep = "enqueue_extension_help"
+    } else {
+      if (ps[pid].writerRound == (1 + ps[pid].readerRound)) {
+        if ((ps[pid].writerRix == ps[pid].readerRix) && (ps[pid].writerIx == ps[pid].readerIx)) {
+          assert(10220, false)
+        }
+      } else {
+        assert(10230, ps[pid].writerRound == ps[pid].readerRound)
+      }
+      ps[pid].nextStep = "enqueue_check_if_new_diversion"
+    }
+  }
+
+  atomicSteps["enqueue_check_if_new_diversion"] = function (pid) {
+    if (0 == ps[pid].elementDivertToRix) {
+      let testNextWriterRix = ps[pid].writerRix
+      let testNextWriterIx  = (1 + ps[pid].writerIx)
+      for (;;) {
+        if ((FIRST_ARRAY_SIZE << testNextWriterRix) == testNextWriterIx) {
+          if (0 == testNextWriterRix) {
+            testNextWriterRix = 0
+            testNextWriterIx  = 0
+            break
+          } else {
+            let tmpRix = testNextWriterRix
+            testNextWriterRix = diversions[tmpRix - 1].rix
+            testNextWriterIx  = (1 + diversions[tmpRix - 1].ix)
+          }
+        } else break
+      }
+      for (;;) {
+        assert(10300, (FIRST_ARRAY_SIZE << testNextWriterRix) != testNextWriterIx)
+        if ((ps[pid].readerRix == testNextWriterRix) && (ps[pid].readerIx == testNextWriterIx)) {
+          ps[pid].nextStep = "enqueue_check_if_new_diversion_yes"
+          break
+        } else if (0 == rings[testNextWriterRix][testNextWriterIx].divertToRix) {
+          ps[pid].nextStep = "enqueue_element_cas"
+          break
+        } else {
+          testNextWriterRix = rings[testNextWriterRix][testNextWriterIx].divertToRix
+          testNextWriterIx = 0
+          if ("undefined" === typeof rings[testNextWriterRix]) {
+            ps[pid].elementCasAssert = false
+            ps[pid].nextStep = "enqueue_element_cas"
+            break
+          }
+        }
+      }
+    } else {
+      ps[pid].nextStep = "enqueue_element_cas"
+    }
+  }
+
+  atomicSteps["enqueue_check_if_new_diversion_yes"] = function (pid) {
+    assert(10400, 0 == ps[pid].divertToRixNew)
+    for (;;) {
+      if ("undefined" === typeof rings[ps[pid].divertToRixNew]) {
+        break
+      } else if (ps[pid].divertToRixNew == CNT_ALLOWED_EXTENSIONS) {
+        ps[pid].divertToRixNew = 0
+        break
+      } else {
+        ps[pid].divertToRixNew ++
+      }
+    }
+    ps[pid].nextStep = "enqueue_element_cas"
+  }
+
+  atomicSteps["enqueue_element_cas"] = function (pid) {
+    assert(10500, (ps[pid].writerRound == (1 + ps[pid].elementRound)) || (false == ps[pid].elementDirty))
+    assert(10510, ((0 == ps[pid].divertToRixNew) || (0 == ps[pid].elementDivertToRix)))
+    if ((ps[pid].elementValue       == rings[ps[pid].writerRix][ps[pid].writerIx].value)
+     && (ps[pid].elementRound       == rings[ps[pid].writerRix][ps[pid].writerIx].round)
+     && (ps[pid].elementDirty       == rings[ps[pid].writerRix][ps[pid].writerIx].dirty)
+     && (ps[pid].elementDivertToRix == rings[ps[pid].writerRix][ps[pid].writerIx].divertToRix))
+    {
+      assert(10520, ps[pid].elementCasAssert)
+      casSucceededMessage = "element CAS succeeded"
+      linearizationPointMessage = "Linearization Point of enqueue"
+      ps[pid].linearized = true
+      cntEnqueued ++
+      rings[ps[pid].writerRix][ps[pid].writerIx].value       = cntEnqueued
+      rings[ps[pid].writerRix][ps[pid].writerIx].round       = ps[pid].writerRound
+      rings[ps[pid].writerRix][ps[pid].writerIx].dirty       = true
+      rings[ps[pid].writerRix][ps[pid].writerIx].divertToRix = (ps[pid].divertToRixNew | ps[pid].elementDivertToRix)
+      //---
+      rings[ps[pid].writerRix][ps[pid].writerIx].full        = true
+      draw_element(ps[pid].writerRix,ps[pid].writerIx)
+      //---
+      ps[pid].elementValue       = cntEnqueued
+      ps[pid].elementRound       = ps[pid].writerRound
+      ps[pid].elementDirty       = true
+      ps[pid].elementDivertToRix = (ps[pid].divertToRixNew | ps[pid].elementDivertToRix)
+    } else {
+      casFailedMessage = "element CAS failed"
+      ps[pid].elementValue       = rings[ps[pid].writerRix][ps[pid].writerIx].value
+      ps[pid].elementRound       = rings[ps[pid].writerRix][ps[pid].writerIx].round
+      ps[pid].elementDirty       = rings[ps[pid].writerRix][ps[pid].writerIx].dirty
+      ps[pid].elementDivertToRix = rings[ps[pid].writerRix][ps[pid].writerIx].divertToRix
+      assert(10530, ps[pid].writerRound <= ps[pid].elementRound)
+      assert(10540, true == ps[pid].elementDirty)
+    }
+    ps[pid].nextStep = "enqueue_extension_help"
+  }
+
+  atomicSteps["enqueue_extension_help"] = function (pid) {
+    if ((0 == ps[pid].elementDivertToRix) || ("undefined" !== typeof rings[ps[pid].elementDivertToRix])) {
+      ps[pid].nextStep = "enqueue_writer_position_cas"
+    } else {
+      ps[pid].nextStep = "enqueue_extension_help_part_1"
+    }
+  }
+
+  atomicSteps["enqueue_extension_help_part_1"] = function (pid) {
+    if ((0 == diversions[ps[pid].elementDivertToRix - 1].rix)
+     && (0 == diversions[ps[pid].elementDivertToRix - 1].ix))
+    {
+      casSucceededMessage = "diversions[" + ps[pid].elementDivertToRix + " - 1] CAS succeeded"
+      if ((0 == ps[pid].writerRix) && (0 == ps[pid].writerIx) && diversion_0_0_drawn) {
+        casRemarkMessage = "(may succeed multiple times for diversion at (0,0))"
+      }
+      for (let tmpRix = 1; tmpRix <= CNT_ALLOWED_EXTENSIONS; tmpRix ++) {
+        assert(10700, (diversions[tmpRix - 1].rix != ps[pid].writerRix)
+                   || (diversions[tmpRix - 1].ix  != ps[pid].writerIx)
+                   || ((0 == ps[pid].writerRix) && (0 == ps[pid].writerIx)))
+      }
+      diversions[ps[pid].elementDivertToRix - 1].rix = ps[pid].writerRix
+      diversions[ps[pid].elementDivertToRix - 1].ix  = ps[pid].writerIx
+      //---
+      draw_diversion(ps[pid].elementDivertToRix, ps[pid].writerRix, ps[pid].writerIx)
+      //---
+    } else {
+      casFailedMessage = "diversions[" + ps[pid].elementDivertToRix + " - 1] CAS failed"
+      assert(10710, (diversions[ps[pid].elementDivertToRix - 1].rix == ps[pid].writerRix)
+                 && (diversions[ps[pid].elementDivertToRix - 1].ix  == ps[pid].writerIx))
+    }
+    ps[pid].nextStep = "enqueue_extension_help_part_2"
+  }
+
+  atomicSteps["enqueue_extension_help_part_2"] = function (pid) {
+    if ("undefined" === typeof rings[ps[pid].elementDivertToRix]) {
+      casSucceededMessage = "rings[" + ps[pid].elementDivertToRix + "] CAS succeeded"
+      for (let tmpRix = 0; tmpRix <= CNT_ALLOWED_EXTENSIONS; tmpRix ++) {
+        assert(10800, ("undefined" === typeof rings[tmpRix])
+                   || (rings[tmpRix].length != (FIRST_ARRAY_SIZE << ps[pid].elementDivertToRix)))
+      }
+      set_ring(ps[pid].elementDivertToRix)
+    } else {
+      casFailedMessage = "rings[" + ps[pid].elementDivertToRix + "] CAS failed"
+      assert(10810, rings[ps[pid].elementDivertToRix].length == (FIRST_ARRAY_SIZE << ps[pid].elementDivertToRix))
+    }
+    ps[pid].nextStep = "enqueue_writer_position_cas"
+  }
+
+  atomicSteps["enqueue_writer_position_cas"] = function (pid) {
+    if (0 != ps[pid].elementDivertToRix) {
+      ps[pid].writerRix = ps[pid].elementDivertToRix
+      ps[pid].writerIx  = 0
+    } else {
+      ps[pid].writerIx ++
+      for (; ((FIRST_ARRAY_SIZE << ps[pid].writerRix) == ps[pid].writerIx) ;) {
+        if (0 == ps[pid].writerRix) {
+          ps[pid].writerRound ++
+          ps[pid].writerRix = 0
+          ps[pid].writerIx  = 0
+          break
+        } else {
+          let tmpRix = ps[pid].writerRix
+          ps[pid].writerRix = diversions[tmpRix - 1].rix
+          ps[pid].writerIx  = (1 + diversions[tmpRix - 1].ix)
+        }
+      }
+    }
+    if (((1 + readerPositionRound) == ps[pid].writerRound)
+     && (readerPositionRix == ps[pid].writerRix)
+     && (readerPositionIx == ps[pid].writerIx)
+     && ("undefined" === typeof rings[CNT_ALLOWED_EXTENSIONS]))
+    {
+      assert(10900, false)
+    }
+    assert(10910, ps[pid].writerIx < (FIRST_ARRAY_SIZE << ps[pid].writerRix))
+    if ((ps[pid].origWriterRound == writerPositionRound)
+     && (ps[pid].origWriterRix   == writerPositionRix)
+     && (ps[pid].origWriterIx    == writerPositionIx))
+    {
+      casSucceededMessage = "Writer position CAS succeeded"
+      writerPositionRound = ps[pid].writerRound
+      writerPositionRix   = ps[pid].writerRix
+      writerPositionIx    = ps[pid].writerIx
+      assert(10920, ps[pid].elementDivertToRix == rings[ps[pid].origWriterRix][ps[pid].origWriterIx].divertToRix)
+      //---
+      draw_element(ps[pid].origWriterRix,ps[pid].origWriterIx)
+      draw_element(ps[pid].writerRix,ps[pid].writerIx)
+      draw_positions()
+      //---
+    } else {
+      casFailedMessage = "Writer position CAS failed"
+      ps[pid].writerRound = writerPositionRound
+      ps[pid].writerRix   = writerPositionRix
+      ps[pid].writerIx    = writerPositionIx
+    }
+    ps[pid].origWriterRound = ps[pid].writerRound
+    ps[pid].origWriterRix   = ps[pid].writerRix
+    ps[pid].origWriterIx    = ps[pid].writerIx
+    if (ps[pid].linearized) {
+      ps[pid].nextStep = "enqueue_done"
+    } else {
+      assert(10930, ps[pid].readerRound <= (1 + ps[pid].writerRound))
+      if ((ps[pid].writerRound == ps[pid].readerRound)
+       && ((0 != ps[pid].readerIx) || ((FIRST_ARRAY_SIZE << ps[pid].writerRix) != (1 + ps[pid].writerIx)))) {
+        ps[pid].nextStep = "enqueue_read_element"
+      } else if ((ps[pid].writerRound == (1 + ps[pid].readerRound))
+              && (ps[pid].writerRix == ps[pid].readerRix)
+              && ((1 + ps[pid].writerIx) < ps[pid].readerIx))
+      {
+        ps[pid].nextStep = "enqueue_read_element"
+      } else {
+        ps[pid].nextStep = "enqueue_read_reader"
+      }
+    }
+  }
+
+  // dequeue steps
+
+  atomicSteps["dequeue_read_reader"] = function (pid) {
+    ps[pid].origReaderRound = readerPositionRound
+    ps[pid].origReaderRix   = readerPositionRix
+    ps[pid].origReaderIx    = readerPositionIx
+    ps[pid].readerRound = ps[pid].origReaderRound
+    ps[pid].readerRix   = ps[pid].origReaderRix
+    ps[pid].readerIx    = ps[pid].origReaderIx
+    assert(20000, ps[pid].readerIx < (FIRST_ARRAY_SIZE << ps[pid].readerRix))
+    ps[pid].nextStep = "dequeue_read_element"
+  }
+
+  atomicSteps["dequeue_read_element"] = function (pid) {
+    assert(20200, ("undefined" !== typeof rings[ps[pid].readerRix]) && (ps[pid].readerIx < rings[ps[pid].readerRix].length))
+    ps[pid].elementValue       = rings[ps[pid].readerRix][ps[pid].readerIx].value
+    ps[pid].elementRound       = rings[ps[pid].readerRix][ps[pid].readerIx].round
+    ps[pid].elementDirty       = rings[ps[pid].readerRix][ps[pid].readerIx].dirty
+    ps[pid].elementDivertToRix = rings[ps[pid].readerRix][ps[pid].readerIx].divertToRix
+    assert(20210, (ps[pid].readerRound <= (1 + ps[pid].elementRound)) || (false == ps[pid].elementDirty))
+
+    if ((ps[pid].readerRound == (1 + ps[pid].elementRound)) || (false == ps[pid].elementDirty)) {
+      linearizationPointMessage = "Linearization point for Queue empty"
+      assert(20220, cntEnqueued == cntDequeued)
+      ps[pid].nextStep = "dequeue_done"
+    } else {
+      ps[pid].nextStep = "dequeue_extension_help"
+    }
+  }
+
+  atomicSteps["dequeue_extension_help"] = function (pid) {
+    if ((0 == ps[pid].elementDivertToRix) || ("undefined" !== typeof rings[ps[pid].elementDivertToRix])) {
+      ps[pid].nextStep = "dequeue_reader_position_cas"
+    } else {
+      ps[pid].nextStep = "dequeue_extension_help_part_1"
+    }
+  }
+
+  atomicSteps["dequeue_extension_help_part_1"] = function (pid) {
+    if ((0 == diversions[ps[pid].elementDivertToRix - 1].rix)
+     && (0 == diversions[ps[pid].elementDivertToRix - 1].ix))
+    {
+      casSucceededMessage = "diversions[" + ps[pid].elementDivertToRix + " - 1] CAS succeeded"
+      if ((0 == ps[pid].readerRix) && (0 == ps[pid].readerIx) && diversion_0_0_drawn) {
+        casRemarkMessage = "(may succeed multiple times for diversion at (0,0))"
+      }
+      for (let tmpRix = 1; tmpRix <= CNT_ALLOWED_EXTENSIONS; tmpRix ++) {
+        assert(20700, (diversions[tmpRix - 1].rix != ps[pid].readerRix)
+                   || (diversions[tmpRix - 1].ix  != ps[pid].readerIx)
+                   || ((0 == ps[pid].readerRix) && (0 == ps[pid].readerIx)))
+      }
+      diversions[ps[pid].elementDivertToRix - 1].rix = ps[pid].readerRix
+      diversions[ps[pid].elementDivertToRix - 1].ix  = ps[pid].readerIx
+      //---
+      draw_diversion(ps[pid].elementDivertToRix, ps[pid].readerRix, ps[pid].readerIx)
+      //---
+    } else {
+      casFailedMessage = "diversions[" + ps[pid].elementDivertToRix + " - 1] CAS failed"
+      assert(20710, (diversions[ps[pid].elementDivertToRix - 1].rix == ps[pid].readerRix)
+                 && (diversions[ps[pid].elementDivertToRix - 1].ix  == ps[pid].readerIx))
+    }
+    ps[pid].nextStep = "dequeue_extension_help_part_2"
+  }
+
+  atomicSteps["dequeue_extension_help_part_2"] = function (pid) {
+    if ("undefined" === typeof rings[ps[pid].elementDivertToRix]) {
+      casSucceededMessage = "rings[" + ps[pid].elementDivertToRix + "] CAS succeeded"
+      for (let tmpRix = 0; tmpRix <= CNT_ALLOWED_EXTENSIONS; tmpRix ++) {
+        assert(20800, ("undefined" === typeof rings[tmpRix])
+                   || (rings[tmpRix].length != (FIRST_ARRAY_SIZE << ps[pid].elementDivertToRix)))
+      }
+      set_ring(ps[pid].elementDivertToRix)
+    } else {
+      casFailedMessage = "rings[" + ps[pid].elementDivertToRix + "] CAS failed"
+      assert(20810, rings[ps[pid].elementDivertToRix].length == (FIRST_ARRAY_SIZE << ps[pid].elementDivertToRix))
+    }
+    ps[pid].nextStep = "dequeue_reader_position_cas"
+  }
+
+  atomicSteps["dequeue_reader_position_cas"] = function (pid) {
+    if (0 != ps[pid].elementDivertToRix) {
+      ps[pid].readerRix = ps[pid].elementDivertToRix
+      ps[pid].readerIx  = 0
+    } else {
+      ps[pid].readerIx ++
+      for (; ((FIRST_ARRAY_SIZE << ps[pid].readerRix) == ps[pid].readerIx) ;) {
+        if (0 == ps[pid].readerRix) {
+          ps[pid].readerRound ++
+          ps[pid].readerRix = 0
+          ps[pid].readerIx  = 0
+          break
+        } else {
+          let tmpRix = ps[pid].readerRix
+          ps[pid].readerRix = diversions[tmpRix - 1].rix
+          ps[pid].readerIx  = (1 + diversions[tmpRix - 1].ix)
+        }
+      }
+    }
+    assert(20900, ps[pid].readerIx < (FIRST_ARRAY_SIZE << ps[pid].readerRix))
+    if ((ps[pid].origReaderRound == readerPositionRound)
+     && (ps[pid].origReaderRix   == readerPositionRix)
+     && (ps[pid].origReaderIx    == readerPositionIx))
+    {
+      casSucceededMessage = "Reader position CAS succeeded"
+      readerPositionRound = ps[pid].readerRound
+      readerPositionRix   = ps[pid].readerRix
+      readerPositionIx    = ps[pid].readerIx
+      assert(20910, ps[pid].elementDivertToRix == rings[ps[pid].origReaderRix][ps[pid].origReaderIx].divertToRix)
+      //---
+      rings[ps[pid].origReaderRix][ps[pid].origReaderIx].full = false
+      draw_element(ps[pid].origReaderRix,ps[pid].origReaderIx)
+      draw_element(ps[pid].readerRix,ps[pid].readerIx)
+      draw_positions()
+      //---
+      linearizationPointMessage = "Linearization point of the dequeue"
+      cntDequeued ++
+      assert(20920, cntDequeued == ps[pid].elementValue)
+      ps[pid].nextStep = "dequeue_done"
+    } else {
+      casFailedMessage = "Reader position CAS failed"
+      ps[pid].readerRound = readerPositionRound
+      ps[pid].readerRix   = readerPositionRix
+      ps[pid].readerIx    = readerPositionIx
+      ps[pid].origReaderRound = ps[pid].readerRound
+      ps[pid].origReaderRix   = ps[pid].readerRix
+      ps[pid].origReaderIx    = ps[pid].readerIx
+      ps[pid].nextStep = "dequeue_read_element"
+    }
+  }
+
+  // ----------------------
+  function assert(assertionID, condition) {
+    if (false == condition) {
+      assertMessage += "*** Assertion " + assertionID + " failed ***"
+    }
+  }
+
+  function set_ring(rix) {
+    rings[rix] = []
+    for (let tmpIx = 0; tmpIx < (FIRST_ARRAY_SIZE << rix); tmpIx ++)
+    {
+      rings[rix][tmpIx] = {}
+      rings[rix][tmpIx].value = 0
+      rings[rix][tmpIx].round = 0
+      rings[rix][tmpIx].dirty = false
+      rings[rix][tmpIx].divertToRix = 0
+      //---
+      rings[rix][tmpIx].full = false
+      draw_element(rix, tmpIx, true, true, true)
+      //---
+    }
+    if (0 == rix) {
+      draw_implicit_return()
+    }
+  }
+
+  function show_process_state(pid, lastStep) {
+    let html = ""
+    if ("" != lastStep) {
+      html += "last: " + lastStep + "<br>"
+    }
+    if (ps[pid].hasOwnProperty("origWriterRound")) {
+      html += "origWriter = (" + ps[pid].origWriterRound + "," + ps[pid].origWriterRix + ","
+                               + ps[pid].origWriterIx + ")    writer = ("
+                               + ps[pid].writerRound + "," + ps[pid].writerRix + ","
+                               + ps[pid].writerIx + ")<br>"
+    }
+    if (ps[pid].hasOwnProperty("origReaderRound")) {
+      html += "origReader = (" + ps[pid].origReaderRound + "," + ps[pid].origReaderRix + ","
+                               + ps[pid].origReaderIx + ")    reader = ("
+                               + ps[pid].readerRound + "," + ps[pid].readerRix + ","
+                               + ps[pid].readerIx + ")<br>"
+    } else if (ps[pid].hasOwnProperty("readerRound")) {
+      html += "reader = (" + ps[pid].readerRound + "," + ps[pid].readerRix + ","
+                           + ps[pid].readerIx + ")<br>"
+    }
+    if (ps[pid].hasOwnProperty("elementDivertToRix")) {
+      html += "element = (" + ps[pid].elementDivertToRix + "," + ps[pid].elementDirty + ","
+                            + ps[pid].elementRound + "," + ps[pid].elementValue + ")<br>"
+    }
+    if (ps[pid].hasOwnProperty("divertToRixNew")) {
+      html += "divertToRixNew = " + ps[pid].divertToRixNew
+                                  + "    linearized = " + ps[pid].linearized + "<br>"
+    }
+    if ("" != assertMessage) {
+      html += "<span class=\"assertMessage\">" + assertMessage + "</span><br>"
+    }
+    if ("" != casFailedMessage) {
+      html += "<span class=\"casFailedMessage\">" + casFailedMessage + "</span><br>"
+    }
+    if (("" != casSucceededMessage) && ("" != linearizationPointMessage)
+     && ("enqueue" == lastStep.substring(0, 7))) {  // condense to one line to save space
+      html += "<span class=\"casSucceededMessage\">" + casSucceededMessage + "</span>    "
+      html += "<span class=\"linearizationPointMessage\">" + linearizationPointMessage + "</span><br>"
+      if ("" != casRemarkMessage) {
+        html += "<span class=\"casRemarkMessage\">" + casRemarkMessage + "</span><br>"
+      }
+    } else {
+      if ("" != casSucceededMessage) {
+        html += "<span class=\"casSucceededMessage\">" + casSucceededMessage + "</span><br>"
+      }
+      if ("" != casRemarkMessage) {
+        html += "<span class=\"casRemarkMessage\">" + casRemarkMessage + "</span><br>"
+      }
+      if ("" != linearizationPointMessage) {
+        html += "<span class=\"linearizationPointMessage\">" + linearizationPointMessage + "</span><br>"
+      }
+    }
+    if (ps[pid].hasOwnProperty("nextStep")) {
+      html += "next: <span class=\"nextStep\">" + ps[pid].nextStep + "</span>"
+    }
+    document.getElementById("process_desc_" + pid).innerHTML = html
+  }
+
+  function atomic_step(pid) {
+    casFailedMessage = ""
+    casSucceededMessage = ""
+    casRemarkMessage = ""
+    linearizationPointMessage = ""
+    let stepToExecute = ps[pid].nextStep
+    if ("enqueue_done" == stepToExecute) {
+      ps[pid] = {}
+    } else if ("dequeue_done" == stepToExecute) {
+      ps[pid] = {}
+    } else {
+      atomicSteps[stepToExecute](pid)
+      trail += "atomicSteps[\"" + stepToExecute + "\"](" + pid + ")  // "
+      trail += "writerPosition = (" + writerPositionRound + "," + writerPositionRix + "," + writerPositionIx + ") "
+      trail += "readerPosition = (" + readerPositionRound + "," + readerPositionRix + "," + readerPositionIx + ") "
+      if (ps[pid].hasOwnProperty("origWriterRound")) {
+        trail += "origWriter = (" + ps[pid].origWriterRound + "," + ps[pid].origWriterRix + ","
+                                  + ps[pid].origWriterIx + ") writer = ("
+                                  + ps[pid].writerRound + "," + ps[pid].writerRix + ","
+                                  + ps[pid].writerIx + ") "
+      }
+      if (ps[pid].hasOwnProperty("origReaderRound")) {
+        trail += "origReader = (" + ps[pid].origReaderRound + "," + ps[pid].origReaderRix + ","
+                                  + ps[pid].origReaderIx + ") reader = ("
+                                  + ps[pid].readerRound + "," + ps[pid].readerRix + ","
+                                  + ps[pid].readerIx + ") "
+      } else if (ps[pid].hasOwnProperty("readerRound")) {
+        trail += "reader = (" + ps[pid].readerRound + "," + ps[pid].readerRix + ","
+                              + ps[pid].readerIx + ") "
+      }
+      if (ps[pid].hasOwnProperty("elementDivertToRix")) {
+        trail += "element = (" + ps[pid].elementDivertToRix + "," + ps[pid].elementDirty + ","
+                               + ps[pid].elementRound + "," + ps[pid].elementValue + ") "
+      }
+      if (ps[pid].hasOwnProperty("divertToRixNew")) {
+        trail += "divertToRixNew = " + ps[pid].divertToRixNew
+                                     + " linearized = " + ps[pid].linearized + " "
+      }
+      if ("" != assertMessage) {
+        trail += "<span class=\"assertMessage\">" + assertMessage + "</span> "
+      }
+      if ("" != casFailedMessage) {
+        trail += "<span class=\"casFailedMessage\">" + casFailedMessage + "</span> "
+      }
+      if ("" != casSucceededMessage) {
+        trail += "<span class=\"casSucceededMessage\">" + casSucceededMessage + "</span> "
+      }
+      if ("" != casRemarkMessage) {
+        trail += "<span class=\"casRemarkMessage\">" + casRemarkMessage + "</span> "
+      }
+      if ("" != linearizationPointMessage) {
+        trail += "<span class=\"linearizationPointMessage\">" + linearizationPointMessage + "</span> "
+      }
+      trail += "next: <span class=\"nextStep\">" + ps[pid].nextStep + "</span><br>"
+    }
+    show_process_state(pid, stepToExecute)
+  }
+
+  function enqueue_atomic_step(pid) {
+    document.getElementById("trail").innerHTML = ""
+    if ("undefined" === typeof ps[pid].nextStep) {
+      document.getElementById("deq_atom_step_" + pid).disabled = true
+      document.getElementById("deq_full_" + pid).disabled = true
+      ps[pid].nextStep = "enqueue_read_writer"
+      show_process_state(pid, "")
+    } else {
+      atomic_step(pid)
+      if ("undefined" === typeof ps[pid].nextStep) {
+        document.getElementById("deq_atom_step_" + pid).disabled = false
+        document.getElementById("deq_full_" + pid).disabled = false
+      }
+    }
+  }
+
+  function enqueue_full(pid) {
+    document.getElementById("trail").innerHTML = ""
+    document.getElementById("enq_atom_step_" + pid).disabled = true
+    document.getElementById("enq_full_" + pid).disabled = true
+    document.getElementById("thread_die_" + pid).disabled = true
+    disable_buttons(true)
+    enqueue_full_next_step(pid)
+  }
+
+  function enqueue_full_next_step(pid) {
+    enqueue_atomic_step(pid)
+    if ("undefined" !== typeof ps[pid].nextStep) {
+      setTimeout(enqueue_full_next_step, 200, pid)
+    } else {
+      document.getElementById("enq_atom_step_" + pid).disabled = false
+      document.getElementById("enq_full_" + pid).disabled = false
+      document.getElementById("thread_die_" + pid).disabled = false
+      disable_buttons(false)
+    }
+  }
+
+  function dequeue_atomic_step(pid) {
+    document.getElementById("trail").innerHTML = ""
+    if ("undefined" === typeof ps[pid].nextStep) {
+      document.getElementById("enq_atom_step_" + pid).disabled = true
+      document.getElementById("enq_full_" + pid).disabled = true
+      ps[pid].nextStep = "dequeue_read_reader"
+      show_process_state(pid, "")
+    } else {
+      atomic_step(pid)
+      if ("undefined" === typeof ps[pid].nextStep) {
+        document.getElementById("enq_atom_step_" + pid).disabled = false
+        document.getElementById("enq_full_" + pid).disabled = false
+      }
+    }
+  }
+
+  function dequeue_full(pid) {
+    document.getElementById("trail").innerHTML = ""
+    document.getElementById("deq_atom_step_" + pid).disabled = true
+    document.getElementById("deq_full_" + pid).disabled = true
+    document.getElementById("thread_die_" + pid).disabled = true
+    disable_buttons(true)
+    dequeue_full_next_step(pid)
+  }
+
+  function dequeue_full_next_step(pid) {
+    dequeue_atomic_step(pid)
+    if ("undefined" !== typeof ps[pid].nextStep) {
+      setTimeout(dequeue_full_next_step, 200, pid)
+    } else {
+      document.getElementById("deq_atom_step_" + pid).disabled = false
+      document.getElementById("deq_full_" + pid).disabled = false
+      document.getElementById("thread_die_" + pid).disabled = false
+      disable_buttons(false)
+    }
+  }
+
+  function thread_die(pid) {
+    document.getElementById("trail").innerHTML = ""
+    ps[pid] = {}
+    casFailedMessage = ""
+    casSucceededMessage = ""
+    casRemarkMessage = ""
+    linearizationPointMessage = ""
+    show_process_state(pid, "thread died")
+    document.getElementById("enq_atom_step_" + pid).disabled = false
+    document.getElementById("enq_full_" + pid).disabled = false
+    document.getElementById("deq_atom_step_" + pid).disabled = false
+    document.getElementById("deq_full_" + pid).disabled = false
+  }
+
+  function random_finish_all() {
+    document.getElementById("trail").innerHTML = ""
+    disable_proc_buttons(true)
+    disable_buttons(true)
+    random_finish_all_next_step()
+  }
+
+  function random_finish_all_next_step() {
+    let pid = Math.floor(4 * Math.random()) % 4
+    let tmpPid = pid
+    for (;;) {
+      if ("undefined" !== typeof ps[tmpPid].nextStep) {
+        atomic_step(tmpPid)
+        setTimeout(random_finish_all_next_step, 200)
+        return
+      } else {
+        tmpPid = (1 + tmpPid) % 4
+        if (pid == tmpPid) {
+          disable_proc_buttons(false)
+          disable_buttons(false)
+          return
+        }
+      }
+    }
+  }
+
+  function show_trail() {
+    document.getElementById("trail").innerHTML = trail
+  }
+
+  function disable_proc_buttons(disabled) {
+    for (let i = 0; i <= 3; i ++) {
+      document.getElementById("enq_atom_step_" + i).disabled = disabled
+      document.getElementById("enq_full_" + i).disabled = disabled
+      document.getElementById("deq_atom_step_" + i).disabled = disabled
+      document.getElementById("deq_full_" + i).disabled = disabled
+      document.getElementById("thread_die_" + i).disabled = disabled
+    }
+  }
+
+  function disable_buttons(disabled) {
+    document.getElementById("LFMAQ_1_2").disabled = disabled
+    document.getElementById("LFMAQ_5_1").disabled = disabled
+    document.getElementById("LFMAQ_10_0").disabled = disabled
+    document.getElementById("LFMAQ_1_0").disabled = disabled
+    document.getElementById("random_finish_all").disabled = disabled
+    document.getElementById("show_trail").disabled = disabled
+  }
+
+  // ----------------------
+  function start_again(firstArraySize, cntAllowedExtensions) {
+    FIRST_ARRAY_SIZE       = firstArraySize
+    CNT_ALLOWED_EXTENSIONS = cntAllowedExtensions
+    MAXIMUM_CAPACITY = (FIRST_ARRAY_SIZE << (1 + CNT_ALLOWED_EXTENSIONS)) - FIRST_ARRAY_SIZE
+
+    subcap.innerHTML = "Contains simplified versions of the algorithms" +
+      " (FIRST_ARRAY_SIZE = " + FIRST_ARRAY_SIZE +
+      ", CNT_ALLOWED_EXTENSIONS = " + CNT_ALLOWED_EXTENSIONS + ")"
+
+    writerPositionRound = 0
+    writerPositionRix = 0
+    writerPositionIx = 0
+    readerPositionRound = 0
+    readerPositionRix = 0
+    readerPositionIx = 0
+    rings = []
+    diversions = []
+    for (let tmpRix = 1; tmpRix <= CNT_ALLOWED_EXTENSIONS; tmpRix ++)
+    {
+      diversions[tmpRix - 1] = { rix: 0, ix: 0 }
+    }
+    diversion_0_0_drawn = false
+
+    ps = [{}, {}, {}, {}]
+
+    cntEnqueued = 0
+    cntDequeued = 0
+    assertMessage = ""
+    casFailedMessage = ""
+    casSucceededMessage = ""
+    casRemarkMessage = ""
+    linearizationPointMessage = ""
+    trail = "start_again(" + FIRST_ARRAY_SIZE + ", " + CNT_ALLOWED_EXTENSIONS + ")<br>"
+    document.getElementById("trail").innerHTML = ""
+
+    document.getElementById("process_desc_0").innerHTML = "<b>Process 0</b><br><br>"
+                                                        + "Tip: To get to an action quickly:<br>"
+                                                        + "Click <b>enq. atom. step</b><br>"
+                                                        + "at all four processes<br>"
+                                                        + "and then click <b>Random finish all</b>."
+    document.getElementById("process_desc_1").innerHTML = "<b>Process 1</b><br><br>"
+                                                        + "Tip: You can also go step-by-step<br>"
+                                                        + "by clicking <b>enq. atom. step</b><br>"
+                                                        + "and <b>deq. atom. step</b> to simulate<br>"
+                                                        + "various interleaves of the processes."
+    document.getElementById("process_desc_2").innerHTML = "<b>Process 2</b><br><br>"
+                                                        + "Tip: You can also let any process die<br>"
+                                                        + "at any time and the Lock-Free Queue<br>"
+                                                        + "will not get blocked."
+    document.getElementById("process_desc_3").innerHTML = "<b>Process 3</b><br><br>"
+                                                        + "Tip: It is also possible to display<br>"
+                                                        + "the trail of the atomic steps<br>"
+                                                        + "for investigation of an<br>"
+                                                        + "eventual concurrency issue."
+
+    if (0 == CNT_ALLOWED_EXTENSIONS) leftOff = 180
+    else if (1 == CNT_ALLOWED_EXTENSIONS) leftOff = 130
+    else leftOff = 80
+
+    disable_proc_buttons(false)
+    ctx.clearRect(0, 0, canv.width, canv.height)
+    set_ring(0)
+    draw_positions()
+  }
+  start_again(1,2)  // LFMAQ(1,2) is the default
+</script>
+<noscript>Sorry, your browser does not support JavaScript!</noscript>
+
+</body>
+</html>
+
