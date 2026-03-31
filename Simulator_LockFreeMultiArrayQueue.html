@@ -873,6 +873,10 @@ div.trail {
     if ("undefined" === typeof ps[pid].nextStep) {
       document.getElementById("deq_atom_step_" + pid).disabled = true
       document.getElementById("deq_full_" + pid).disabled = true
+      casFailedMessage = ""
+      casSucceededMessage = ""
+      casRemarkMessage = ""
+      linearizationPointMessage = ""
       ps[pid].nextStep = "enqueue_read_writer"
       show_process_state(pid, "")
     } else {
@@ -910,6 +914,10 @@ div.trail {
     if ("undefined" === typeof ps[pid].nextStep) {
       document.getElementById("enq_atom_step_" + pid).disabled = true
       document.getElementById("enq_full_" + pid).disabled = true
+      casFailedMessage = ""
+      casSucceededMessage = ""
+      casRemarkMessage = ""
+      linearizationPointMessage = ""
       ps[pid].nextStep = "dequeue_read_reader"
       show_process_state(pid, "")
     } else {
