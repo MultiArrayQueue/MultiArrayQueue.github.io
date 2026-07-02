@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="Interactive Simulator of the Wait-Free Multi-Array Queue">
+<title>Interactive Simulator of the Wait-Free Multi-Array Queue</title>
+<style>
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  color: #24292e;
+  background-color: #fdfdfd;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-feature-settings: "kern" 1;
+  -moz-font-feature-settings: "kern" 1;
+  -o-font-feature-settings: "kern" 1;
+  font-feature-settings: "kern" 1;
+  font-kerning: normal;
+  padding-right: 30px;
+  padding-left: 30px;
+}
+h1 {
+  margin-bottom: 10px;
+}
+h4 {
+  margin-top: 0px;
+  margin-bottom: 10px;
+}
+button {
+  padding: 10px;
+  margin-right: 20px;
+  margin-bottom: 10px;
+}
+button.process {
+  padding: 5px;
+  margin-top: 5px;
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+td {
+  vertical-align: top;
+}
+td.process {
+  border: 1px solid #000000;
+}
+td.process_desc {
+  width:  270px;
+  max-width: 270px;
+  height:  190px;
+  font-size: small;
+  line-height: 1.5;
+  white-space: pre;
+}
+td.process_buttons {
+  text-align: right;
+}
+span.assertMessage {
+  font-weight: bold;
+  color: red;
+}
+span.casFailedMessage {
+  font-weight: bold;
+  color: black;
+}
+span.casSucceededMessage {
+  font-weight: bold;
+  color: green;
+}
+span.casRemarkMessage {
+  font-style: italic;
+}
+span.linearizationPointMessage {
+  font-weight: bold;
+  color: blue;
+}
+span.nextStep {
+  color: darkviolet;
+}
+div.trail {
+  font-size: small;
+  line-height: 1.5;
+  white-space: pre;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Interactive Simulator of the Wait-Free Multi-Array Queue</h1>
+<h4 id="subcap"></h4>
+<table>
+  <tr>
+    <td class="process">
+      <table>
+        <tr>
+          <td class="process_desc" id="process_desc_0">
+          </td>
+          <td class="process_buttons">
+            <button class="process" id="enq_atom_step_0" onclick="enqueue_atomic_step(0)">enq. atom. step</button>
+            <button class="process" id="enq_full_0" onclick="enqueue_full(0)">enq. full</button>
+            <br>
+            <button class="process" id="deq_atom_step_0" onclick="dequeue_atomic_step(0)">deq. atom. step</button>
+            <button class="process" id="deq_full_0" onclick="dequeue_full(0)">deq. full</button>
+          </td>
+        </tr>
+      </table>
+    </td>
+    <td rowspan="3"><canvas id="canv" width="460px" height="600px"></canvas></td>
+  </tr>
+  <tr>
+    <td class="process">
+      <table>
+        <tr>
+          <td class="process_desc" id="process_desc_1">
+          </td>
+          <td class="process_buttons">
+            <button class="process" id="enq_atom_step_1" onclick="enqueue_atomic_step(1)">enq. atom. step</button>
+            <button class="process" id="enq_full_1" onclick="enqueue_full(1)">enq. full</button>
+            <br>
+            <button class="process" id="deq_atom_step_1" onclick="dequeue_atomic_step(1)">deq. atom. step</button>
+            <button class="process" id="deq_full_1" onclick="dequeue_full(1)">deq. full</button>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td class="process">
+      <table>
+        <tr>
+          <td class="process_desc" id="process_desc_2">
+          </td>
+          <td class="process_buttons">
+            <button class="process" id="enq_atom_step_2" onclick="enqueue_atomic_step(2)">enq. atom. step</button>
+            <button class="process" id="enq_full_2" onclick="enqueue_full(2)">enq. full</button>
+            <br>
+            <button class="process" id="deq_atom_step_2" onclick="dequeue_atomic_step(2)">deq. atom. step</button>
+            <button class="process" id="deq_full_2" onclick="dequeue_full(2)">deq. full</button>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<br>
+<button id="WFMAQ_1_2" onclick="start_again(1,2)">Start again WFMAQ(1,2)</button>
+<button id="WFMAQ_2_2" onclick="start_again(2,2)">WFMAQ(2,2)</button>
+<button id="WFMAQ_5_0" onclick="start_again(5,0)">WFMAQ(5,0)</button>
+<button id="WFMAQ_1_0" onclick="start_again(1,0)">WFMAQ(1,0) corner case</button>
+<button id="random_finish_all" onclick="random_finish_all()"><b>Random finish all</b></button>
+<button id="show_trail" onclick="show_trail()">Show trail</button>
+<div class="trail" id="trail"></div>
+
+<script>
+  "use strict"
+  const subcap = document.getElementById("subcap")
+  const canv = document.getElementById("canv")
+  const ctx = canv.getContext("2d")
+  // ----------------------
+  var leftOff
+  const elemSize = 60
+  const divDist = 12
+  const bottOff = divDist * 5
+  const arrDist = divDist * 7 + elemSize
+
+  function arrow_up(x, y) {
+    ctx.lineTo( x, y )
+    ctx.lineTo( x - 3, y + 5 )
+    ctx.moveTo( x, y )
+    ctx.lineTo( x + 3, y + 5 )
+  }
+
+  function arrow_left(x, y ) {
+    ctx.lineTo( x, y )
+    ctx.lineTo( x + 5, y - 3 )
+    ctx.moveTo( x, y )
+    ctx.lineTo( x + 5, y + 3 )
+  }
+
+  function draw_element(rix, ix) {
+    // low part
+    // background
+    if (rings[rix][ix].lowFullEmpty  && (false == rings[rix][ix].lowFullEmptyFinished)) {
+      ctx.fillStyle = "#98FB98"  // full/empty linearized && not yet finished: green
+    } else if (rings[rix][ix].lowEnqueue) {
+      ctx.fillStyle = "#C0C0C0"  // regular enqueue linearized: full
+    } else {
+      ctx.fillStyle = "#FFFFFF"  // otherwise empty
+    }
+    ctx.fillRect( leftOff + (rix * arrDist), canv.height - bottOff - 2*elemSize/3 - (ix * elemSize), elemSize, 2*elemSize/3 )
+    // border
+    ctx.lineWidth = 2
+    ctx.strokeStyle = "#000000"
+    ctx.strokeRect( leftOff + (rix * arrDist), canv.height - bottOff - 2*elemSize/3 - (ix * elemSize), elemSize, 2*elemSize/3 )
+    // round,tid,phase
+    let txt
+    if (rings[rix][ix].lowDirty) {
+      txt = rings[rix][ix].lowRound + "," + rings[rix][ix].lowTid + "," + rings[rix][ix].lowPhase
+    } else {
+      txt = "clean"
+    }
+    ctx.font = "14px Arial"
+    ctx.textAlign = "center"
+    ctx.fillStyle = "#000000"
+    ctx.fillText( txt,
+                  leftOff + (rix * arrDist) + (elemSize / 2),
+                  canv.height - bottOff - (ix * elemSize) - 24)
+    // W,R,WR indicator
+    txt = ""
+    if ((rix == writerPositionRix) && (ix == writerPositionIx)) txt += "W"
+    if ((rix == readerPositionRix) && (ix == readerPositionIx)) txt += "R"
+    if ("" != txt) {
+      ctx.fillText( txt,
+                    leftOff + (rix * arrDist) + (elemSize / 2),
+                    canv.height - bottOff - (ix * elemSize) - 6)
+    }
+    // high part
+    // background
+    if (rings[rix][ix].full) {
+      ctx.fillStyle = "#87CEFA"  // full
+    } else {
+      ctx.fillStyle = "#FFFFFF"  // empty
+    }
+    ctx.fillRect( leftOff + (rix * arrDist), canv.height - bottOff - elemSize - (ix * elemSize), elemSize, elemSize/3 )
+    // border
+    ctx.lineWidth = 2
+    ctx.strokeStyle = "#000000"
+    ctx.strokeRect( leftOff + (rix * arrDist), canv.height - bottOff - elemSize - (ix * elemSize), elemSize, elemSize/3 )
+    // divertToRix indicator
+    if (0 != rings[rix][ix].highDivertToRix) {
+      ctx.fillStyle = "#000000"
+      ctx.beginPath()
+      ctx.moveTo(leftOff + (rix * arrDist) + elemSize,      canv.height - bottOff - elemSize - (ix * elemSize) + 9)
+      ctx.lineTo(leftOff + (rix * arrDist) + elemSize + 10, canv.height - bottOff - elemSize - (ix * elemSize) + 15)
+      ctx.lineTo(leftOff + (rix * arrDist) + elemSize,      canv.height - bottOff - elemSize - (ix * elemSize) + 21)
+      ctx.closePath()
+      ctx.fill()
+    }
+    // round,value
+    if (rings[rix][ix].highDirty) {
+      txt = rings[rix][ix].highRound + "," + rings[rix][ix].highValue
+    } else {
+      txt = "clean"
+    }
+    ctx.font = "14px Arial"
+    ctx.textAlign = "center"
+    ctx.fillStyle = "#000000"
+    ctx.fillText( txt,
+                  leftOff + (rix * arrDist) + (elemSize / 2),
+                  canv.height - bottOff - 2*elemSize/3 - (ix * elemSize) - 5)
+  }
+
+  function draw_implicit_return() {
+    ctx.lineWidth = 1
+    ctx.strokeStyle = "#000000"
+
+    ctx.beginPath()
+    ctx.moveTo( leftOff + (elemSize / 2) , canv.height - bottOff - (FIRST_ARRAY_SIZE * elemSize)           )
+    ctx.lineTo( leftOff + (elemSize / 2) , canv.height - bottOff - (FIRST_ARRAY_SIZE * elemSize) - divDist )
+    ctx.lineTo( leftOff - (2 * divDist)  , canv.height - bottOff - (FIRST_ARRAY_SIZE * elemSize) - divDist )
+    ctx.lineTo( leftOff - (2 * divDist)  , canv.height - bottOff + divDist                                 )
+    ctx.lineTo( leftOff + (elemSize / 2) , canv.height - bottOff + divDist                                 )
+    arrow_up  ( leftOff + (elemSize / 2) , canv.height - bottOff + 1                                       )
+    ctx.stroke()
+  }
+
+  function draw_diversion(divertToRix, rix, ix) {
+    if ((0 == rix) && (0 == ix)) {
+      if (diversion_0_0_drawn) return  // the CAS in diversions[] for diversion at (0,0) may succeed multiple times, but draw only once
+      diversion_0_0_drawn = true
+    }
+    ctx.lineWidth = 1
+    ctx.strokeStyle = "#000000"
+
+    ctx.beginPath()
+    ctx.moveTo( leftOff + (rix * arrDist) + elemSize + 10                            , canv.height - bottOff - elemSize - (ix * elemSize) + 15 )
+    ctx.lineTo( leftOff + (rix * arrDist) + elemSize + ((1 + divertToRix) * divDist) , canv.height - bottOff - elemSize - (ix * elemSize) + 15 )
+    ctx.lineTo( leftOff + (rix * arrDist) + elemSize + ((1 + divertToRix) * divDist) , canv.height - bottOff + (divertToRix * divDist)         )
+    ctx.lineTo( leftOff + (divertToRix * arrDist) + (elemSize / 2)                   , canv.height - bottOff + (divertToRix * divDist)         )
+    arrow_up  ( leftOff + (divertToRix * arrDist) + (elemSize / 2)                   , canv.height - bottOff + 1                               )
+    ctx.stroke()
+
+    ctx.beginPath()
+    ctx.moveTo( leftOff + (divertToRix * arrDist) + (elemSize / 2)                   , canv.height - bottOff - ((FIRST_ARRAY_SIZE << divertToRix) * elemSize)           )
+    ctx.lineTo( leftOff + (divertToRix * arrDist) + (elemSize / 2)                   , canv.height - bottOff - ((FIRST_ARRAY_SIZE << divertToRix) * elemSize) - divDist )
+    ctx.lineTo( leftOff + (rix * arrDist) + elemSize + ((1 + divertToRix) * divDist) , canv.height - bottOff - ((FIRST_ARRAY_SIZE << divertToRix) * elemSize) - divDist )
+    ctx.lineTo( leftOff + (rix * arrDist) + elemSize + ((1 + divertToRix) * divDist) , canv.height - bottOff - elemSize - (ix * elemSize)                               )
+    arrow_left( leftOff + (rix * arrDist) + elemSize + 1                             , canv.height - bottOff - elemSize - (ix * elemSize)                               )
+    ctx.stroke()
+  }
+
+  function draw_positions() {
+    ctx.clearRect( 20, 20, 270, 50 )
+    ctx.font = "14px Arial"
+    ctx.textAlign = "left"
+    ctx.fillStyle = "#000000"
+    ctx.fillText( "writerPosition(round,rix,ix) = (" + writerPositionRound + "," + writerPositionRix + "," + writerPositionIx + ")",
+                  30, 40 )
+    ctx.fillText( "readerPosition(round,rix,ix) = (" + readerPositionRound + "," + readerPositionRix + "," + readerPositionIx + ")",
+                  30, 60 )
+  }
+
+  function draw_state(tid) {
+    if (state[tid].pending) {
+      ctx.fillStyle = "#FF9999"
+    } else {
+      ctx.fillStyle = "#FFFFFF"
+    }
+    ctx.fillRect( 30, 90 + tid*elemSize/2, 200, elemSize/2 )
+    // border
+    ctx.lineWidth = 2
+    ctx.strokeStyle = "#000000"
+    ctx.strokeRect( 30, 90 + tid*elemSize/2, 200, elemSize/2 )
+    // inProgress,pending,fullOrEmpty,enqueue,phase,value
+    ctx.font = "14px Arial"
+    ctx.textAlign = "left"
+    ctx.fillStyle = "#000000"
+    ctx.fillText( tid + ": (" + state[tid].inProgress
+                        + "," + state[tid].pending
+                        + "," + state[tid].fullOrEmpty
+                        + "," + state[tid].enqueue
+                        + "," + state[tid].phase
+                        + "," + state[tid].value + ")",
+                  35, 90 + elemSize/2 + tid*elemSize/2 - 10 )
+  }
+
+  // ----------------------
+  // private data of the Queue
+  var FIRST_ARRAY_SIZE
+  var CNT_ALLOWED_EXTENSIONS
+  var MAXIMUM_CAPACITY
+  var NUM_THRDS
+  var nextPhase
+  var state
+  var rings
+  var diversions
+  var diversion_0_0_drawn
+  var writerPositionRound
+  var writerPositionRix
+  var writerPositionIx
+  var readerPositionRound
+  var readerPositionRix
+  var readerPositionIx
+
+  var ps  // per-process states
+  var atomicSteps = {}  // the atomic steps, indexed by their goto labels
+
+  var linearizationOrder  // verification data
+  var cntEnqueued
+  var cntDequeued
+  var assertMessage
+  var casFailedMessage
+  var casSucceededMessage
+  var casRemarkMessage
+  var linearizationPointMessage
+  var trail
+
+  // the actual atomic steps
+  //
+  // The primary source of explanations and comments on the Wait-Free Multi-Array Queue algorithms
+  // is the Promela model for Spin.
+
+  atomicSteps["get_own_phase"] = function (ownTid) {
+    ps[ownTid].ownPhase = nextPhase
+    nextPhase ++
+    ps[ownTid].nextStep = "write_own_state"
+  }
+
+  atomicSteps["write_own_state"] = function (ownTid) {
+    ps[ownTid].enqueueEffectiveSkip = false
+    ps[ownTid].dequeueEffectiveSkip = false
+    ps[ownTid].cycles = 0
+    assert(10100, false == state[ownTid].pending)
+    assert(10110, false == state[ownTid].inProgress)
+    state[ownTid].value       = ps[ownTid].ownPhase
+    state[ownTid].phase       = ps[ownTid].ownPhase
+    state[ownTid].enqueue     = ps[ownTid].ownEnqueue
+    state[ownTid].fullOrEmpty = false
+    state[ownTid].pending     = true
+    state[ownTid].inProgress  = true
+    //---
+    draw_state(ownTid)
+    //---
+    ps[ownTid].helpLinearizeTid = ((1 + ownTid) % NUM_THRDS)
+    ps[ownTid].nextStep = "read_helpee_state"
+  }
+
+  atomicSteps["read_helpee_state"] = function (ownTid) {
+    ps[ownTid].stateValue       = state[ps[ownTid].helpLinearizeTid].value
+    ps[ownTid].statePhase       = state[ps[ownTid].helpLinearizeTid].phase
+    ps[ownTid].stateEnqueue     = state[ps[ownTid].helpLinearizeTid].enqueue
+    ps[ownTid].stateFullOrEmpty = state[ps[ownTid].helpLinearizeTid].fullOrEmpty
+    ps[ownTid].statePending     = state[ps[ownTid].helpLinearizeTid].pending
+    ps[ownTid].stateInProgress  = state[ps[ownTid].helpLinearizeTid].inProgress
+    ps[ownTid].nextStep = "test_helpee_state"
+  }
+
+  atomicSteps["test_helpee_state"] = function (ownTid) {
+    if (ps[ownTid].statePending && (ps[ownTid].statePhase <= ps[ownTid].ownPhase)) {
+      if (ps[ownTid].stateEnqueue) {
+        if (false == ps[ownTid].enqueueEffectiveSkip) ps[ownTid].nextStep = "enqueue_read_writer"
+        else ps[ownTid].nextStep = "enqueue_read_reader"
+      } else {
+        if (false == ps[ownTid].dequeueEffectiveSkip) ps[ownTid].nextStep = "dequeue_read_reader"
+        else ps[ownTid].nextStep = "dequeue_read_writer"
+      }
+    } else {
+      if (ownTid != ps[ownTid].helpLinearizeTid) {
+        ps[ownTid].helpLinearizeTid = ((1 + ps[ownTid].helpLinearizeTid) % NUM_THRDS)
+        ps[ownTid].nextStep = "read_helpee_state"
+      } else {
+        assert(10300, false == state[ownTid].pending)
+        assert(10310, true == state[ownTid].inProgress)
+        state[ownTid].inProgress = false
+        //---
+        draw_state(ownTid)
+        //---
+        ps[ownTid].nextStep = "operation_done"
+      }
+    }
+  }
+
+  atomicSteps["enqueue_read_writer"] = function (ownTid) {
+    ps[ownTid].origEffectiveRound = writerPositionRound
+    ps[ownTid].origEffectiveRix   = writerPositionRix
+    ps[ownTid].origEffectiveIx    = writerPositionIx
+    ps[ownTid].effectiveRound = ps[ownTid].origEffectiveRound
+    ps[ownTid].effectiveRix   = ps[ownTid].origEffectiveRix
+    ps[ownTid].effectiveIx    = ps[ownTid].origEffectiveIx
+    assert(10400, ps[ownTid].effectiveIx < (FIRST_ARRAY_SIZE << ps[ownTid].effectiveRix))
+    ps[ownTid].nextStep = "enqueue_read_reader"
+  }
+
+  atomicSteps["enqueue_read_reader"] = function (ownTid) {
+    ps[ownTid].oppositeRound = readerPositionRound
+    ps[ownTid].oppositeRix   = readerPositionRix
+    ps[ownTid].oppositeIx    = readerPositionIx
+    assert(10500, ps[ownTid].oppositeIx < (FIRST_ARRAY_SIZE << ps[ownTid].oppositeRix))
+    assert(10510, ps[ownTid].effectiveRound <= (1 + ps[ownTid].oppositeRound))
+    ps[ownTid].nextStep = "enqueue_read_element_low"
+  }
+
+  atomicSteps["enqueue_read_element_low"] = function (ownTid) {
+    ps[ownTid].isNowFullOrEmpty = false
+    ps[ownTid].needReReadReader = false
+    ps[ownTid].sawElementLowTidAlive = false
+    ps[ownTid].divertToRixNew = 0
+    ps[ownTid].enqueueEffectiveSkip = false
+    ps[ownTid].dequeueEffectiveSkip = false
+    ps[ownTid].elementCasAssert = true
+    ps[ownTid].cycles ++
+    assert(10600, ps[ownTid].cycles <= 8)
+    assert(10610, ("undefined" !== typeof rings[ps[ownTid].effectiveRix]) && (ps[ownTid].effectiveIx < rings[ps[ownTid].effectiveRix].length))
+    ps[ownTid].elementLowPhase             = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowPhase
+    ps[ownTid].elementLowEnqueue           = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowEnqueue
+    ps[ownTid].elementLowFullEmpty         = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowFullEmpty
+    ps[ownTid].elementLowFullEmptyFinished = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowFullEmptyFinished
+    ps[ownTid].elementLowRound             = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowRound
+    ps[ownTid].elementLowDirty             = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowDirty
+    ps[ownTid].elementLowTid               = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowTid
+    assert(10620, (ps[ownTid].effectiveRound <= (1 + ps[ownTid].elementLowRound)) || (false == ps[ownTid].elementLowDirty))
+    if (ps[ownTid].elementLowFullEmpty && (false == ps[ownTid].elementLowFullEmptyFinished)) {
+      if (ps[ownTid].statePhase != ps[ownTid].elementLowPhase) ps[ownTid].nextStep = "help_full_empty_re_read_state"
+      else ps[ownTid].nextStep = "help_full_empty_cas_state"
+      return
+    }
+    if ((ps[ownTid].effectiveRound != (1 + ps[ownTid].elementLowRound)) && ps[ownTid].elementLowDirty) {
+      if ((ps[ownTid].effectiveRound == writerPositionRound) && (ps[ownTid].effectiveRix == writerPositionRix) && (ps[ownTid].effectiveIx == writerPositionIx)) {
+        assert(10630, false == ps[ownTid].elementLowFullEmpty)
+        assert(10640, (ps[ownTid].effectiveRound != (1 + readerPositionRound)) || (ps[ownTid].effectiveRix != readerPositionRix) || (ps[ownTid].effectiveIx != readerPositionIx))
+      }
+      if (ps[ownTid].effectiveRound != ps[ownTid].elementLowRound) {
+        ps[ownTid].origEffectiveRound = ps[ownTid].elementLowRound
+        ps[ownTid].effectiveRound = ps[ownTid].elementLowRound
+      }
+      if (ps[ownTid].elementLowEnqueue) {
+        if (ps[ownTid].statePhase != ps[ownTid].elementLowPhase) ps[ownTid].nextStep = "help_finish_re_read_state"
+        else ps[ownTid].nextStep = "help_finish_read_element_high"
+      } else {
+        ps[ownTid].nextStep = "help_finish_re_read_state"
+      }
+    } else {
+      if (ps[ownTid].elementLowDirty && ps[ownTid].elementLowEnqueue) {
+        assert(10650, ps[ownTid].effectiveRound == (1 + ps[ownTid].elementLowRound))
+        ps[ownTid].isNowFullOrEmpty = true
+        ps[ownTid].nextStep = "re_check_state_pending"
+      } else if (ps[ownTid].elementLowDirty && (false == ps[ownTid].elementLowEnqueue)) {
+        if ((ps[ownTid].effectiveRound == (1 + ps[ownTid].oppositeRound)) && (ps[ownTid].effectiveRix == ps[ownTid].oppositeRix) && (ps[ownTid].effectiveIx == ps[ownTid].oppositeIx)) {
+          ps[ownTid].origEffectiveRound = ps[ownTid].oppositeRound
+          ps[ownTid].effectiveRound = ps[ownTid].oppositeRound
+          ps[ownTid].nextStep = "help_finish_re_read_state"
+        } else ps[ownTid].nextStep = "re_check_state_pending"
+      } else {
+        ps[ownTid].nextStep = "re_check_state_pending"
+      }
+    }
+  }
+
+  atomicSteps["dequeue_read_reader"] = function (ownTid) {
+    ps[ownTid].origEffectiveRound = readerPositionRound
+    ps[ownTid].origEffectiveRix   = readerPositionRix
+    ps[ownTid].origEffectiveIx    = readerPositionIx
+    ps[ownTid].effectiveRound = ps[ownTid].origEffectiveRound
+    ps[ownTid].effectiveRix   = ps[ownTid].origEffectiveRix
+    ps[ownTid].effectiveIx    = ps[ownTid].origEffectiveIx
+    assert(10700, ps[ownTid].effectiveIx < (FIRST_ARRAY_SIZE << ps[ownTid].effectiveRix))
+    ps[ownTid].nextStep = "dequeue_read_writer"
+  }
+
+  atomicSteps["dequeue_read_writer"] = function (ownTid) {
+    ps[ownTid].oppositeRound = writerPositionRound
+    ps[ownTid].oppositeRix   = writerPositionRix
+    ps[ownTid].oppositeIx    = writerPositionIx
+    assert(10800, ps[ownTid].oppositeIx < (FIRST_ARRAY_SIZE << ps[ownTid].oppositeRix))
+    assert(10810, ps[ownTid].effectiveRound <= ps[ownTid].oppositeRound)
+    ps[ownTid].nextStep = "dequeue_read_element_low"
+  }
+
+  atomicSteps["dequeue_read_element_low"] = function (ownTid) {
+    ps[ownTid].isNowFullOrEmpty = false
+    ps[ownTid].needReReadReader = false
+    ps[ownTid].sawElementLowTidAlive = false
+    ps[ownTid].divertToRixNew = 0
+    ps[ownTid].enqueueEffectiveSkip = false
+    ps[ownTid].dequeueEffectiveSkip = false
+    ps[ownTid].elementCasAssert = true
+    ps[ownTid].cycles ++
+    assert(10900, ps[ownTid].cycles <= 8)
+    assert(10910, ("undefined" !== typeof rings[ps[ownTid].effectiveRix]) && (ps[ownTid].effectiveIx < rings[ps[ownTid].effectiveRix].length))
+    ps[ownTid].elementLowPhase             = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowPhase
+    ps[ownTid].elementLowEnqueue           = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowEnqueue
+    ps[ownTid].elementLowFullEmpty         = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowFullEmpty
+    ps[ownTid].elementLowFullEmptyFinished = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowFullEmptyFinished
+    ps[ownTid].elementLowRound             = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowRound
+    ps[ownTid].elementLowDirty             = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowDirty
+    ps[ownTid].elementLowTid               = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowTid
+    assert(10920, (ps[ownTid].effectiveRound <= (1 + ps[ownTid].elementLowRound)) || (false == ps[ownTid].elementLowDirty))
+    if (ps[ownTid].elementLowFullEmpty && (false == ps[ownTid].elementLowFullEmptyFinished)) {
+      if (ps[ownTid].statePhase != ps[ownTid].elementLowPhase) ps[ownTid].nextStep = "help_full_empty_re_read_state"
+      else ps[ownTid].nextStep = "help_full_empty_cas_state"
+      return
+    }
+    if (((ps[ownTid].effectiveRound != ps[ownTid].elementLowRound) || (false == ps[ownTid].elementLowEnqueue)) && (ps[ownTid].effectiveRound != (1 + ps[ownTid].elementLowRound)) && ps[ownTid].elementLowDirty) {
+      if ((ps[ownTid].effectiveRound == readerPositionRound) && (ps[ownTid].effectiveRix == readerPositionRix) && (ps[ownTid].effectiveIx == readerPositionIx)) {
+        assert(10930, false == ps[ownTid].elementLowFullEmpty)
+        assert(10940, (ps[ownTid].effectiveRound != writerPositionRound) || (ps[ownTid].effectiveRix != writerPositionRix) || (ps[ownTid].effectiveIx != writerPositionIx))
+      }
+      if (ps[ownTid].effectiveRound != ps[ownTid].elementLowRound) {
+        ps[ownTid].origEffectiveRound = ps[ownTid].elementLowRound
+        ps[ownTid].effectiveRound = ps[ownTid].elementLowRound
+      }
+      if (ps[ownTid].elementLowEnqueue) {
+        ps[ownTid].needReReadReader = true
+        ps[ownTid].nextStep = "help_finish_re_read_state"
+      } else {
+        if (ps[ownTid].statePhase != ps[ownTid].elementLowPhase) ps[ownTid].nextStep = "help_finish_re_read_state"
+        else ps[ownTid].nextStep = "help_finish_read_element_high"
+      }
+    } else {
+      if (ps[ownTid].elementLowDirty && ps[ownTid].elementLowEnqueue) {
+        if ((ps[ownTid].effectiveRound == ps[ownTid].oppositeRound) && (ps[ownTid].effectiveRix == ps[ownTid].oppositeRix) && (ps[ownTid].effectiveIx == ps[ownTid].oppositeIx)) {
+          ps[ownTid].needReReadReader = true
+          ps[ownTid].nextStep = "help_finish_re_read_state"
+        } else ps[ownTid].nextStep = "re_check_state_pending"
+      } else if (ps[ownTid].elementLowDirty && (false == ps[ownTid].elementLowEnqueue)) {
+        assert(10950, ps[ownTid].effectiveRound == (1 + ps[ownTid].elementLowRound))
+        ps[ownTid].isNowFullOrEmpty = true
+        ps[ownTid].nextStep = "re_check_state_pending"
+      } else {
+        ps[ownTid].isNowFullOrEmpty = true
+        ps[ownTid].nextStep = "re_check_state_pending"
+      }
+    }
+  }
+
+  atomicSteps["re_check_state_pending"] = function (ownTid) {
+    assert(11000, false == ps[ownTid].stateFullOrEmpty)
+    assert(11010, true == ps[ownTid].statePending)
+    assert(11020, true == ps[ownTid].stateInProgress)
+    if ((ps[ownTid].stateValue       == state[ps[ownTid].helpLinearizeTid].value)
+     && (ps[ownTid].statePhase       == state[ps[ownTid].helpLinearizeTid].phase)
+     && (ps[ownTid].stateEnqueue     == state[ps[ownTid].helpLinearizeTid].enqueue)
+     && (ps[ownTid].stateFullOrEmpty == state[ps[ownTid].helpLinearizeTid].fullOrEmpty)
+     && (ps[ownTid].statePending     == state[ps[ownTid].helpLinearizeTid].pending)
+     && (ps[ownTid].stateInProgress  == state[ps[ownTid].helpLinearizeTid].inProgress)) {
+      ps[ownTid].nextStep = "cas_element_low"
+    } else {
+      assert(11030, (false == state[ps[ownTid].helpLinearizeTid].pending) || (ps[ownTid].statePhase < state[ps[ownTid].helpLinearizeTid].phase))
+      ps[ownTid].stateValue       = state[ps[ownTid].helpLinearizeTid].value
+      ps[ownTid].statePhase       = state[ps[ownTid].helpLinearizeTid].phase
+      ps[ownTid].stateEnqueue     = state[ps[ownTid].helpLinearizeTid].enqueue
+      ps[ownTid].stateFullOrEmpty = state[ps[ownTid].helpLinearizeTid].fullOrEmpty
+      ps[ownTid].statePending     = state[ps[ownTid].helpLinearizeTid].pending
+      ps[ownTid].stateInProgress  = state[ps[ownTid].helpLinearizeTid].inProgress
+      ps[ownTid].nextStep = "test_helpee_state"
+    }
+  }
+
+  atomicSteps["cas_element_low"] = function (ownTid) {
+    if ((ps[ownTid].elementLowPhase             == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowPhase)
+     && (ps[ownTid].elementLowEnqueue           == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowEnqueue)
+     && (ps[ownTid].elementLowFullEmpty         == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowFullEmpty)
+     && (ps[ownTid].elementLowFullEmptyFinished == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowFullEmptyFinished)
+     && (ps[ownTid].elementLowRound             == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowRound)
+     && (ps[ownTid].elementLowDirty             == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowDirty)
+     && (ps[ownTid].elementLowTid               == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowTid)) {
+      casSucceededMessage = "Element (low) CAS succeeded"
+      if (ps[ownTid].isNowFullOrEmpty) {
+        if (ps[ownTid].stateEnqueue) linearizationPointMessage = "Linearization Point Queue full for phase " + ps[ownTid].statePhase
+        else linearizationPointMessage = "Linearization Point Queue empty for phase " + ps[ownTid].statePhase
+      } else {
+        if (ps[ownTid].stateEnqueue) linearizationPointMessage = "Linearization Point Enqueue for phase " + ps[ownTid].statePhase
+        else linearizationPointMessage = "Linearization Point Dequeue for phase " + ps[ownTid].statePhase
+      }
+      ps[ownTid].sawElementLowTidAlive = true
+      if (ps[ownTid].isNowFullOrEmpty) {
+        assert(11100, ps[ownTid].stateEnqueue == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowEnqueue)
+        assert(11110, (ps[ownTid].effectiveRound == (1 + ps[ownTid].elementLowRound)) || (false == ps[ownTid].elementLowDirty))
+      }
+      rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowPhase             = ps[ownTid].statePhase
+      rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowEnqueue           = ps[ownTid].stateEnqueue
+      rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowFullEmpty         = ps[ownTid].isNowFullOrEmpty
+      rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowFullEmptyFinished = false
+      rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowRound             = (ps[ownTid].isNowFullOrEmpty ? ps[ownTid].elementLowRound : ps[ownTid].effectiveRound)
+      rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowDirty             = (ps[ownTid].isNowFullOrEmpty ? ps[ownTid].elementLowDirty : true)
+      rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowTid               = ps[ownTid].helpLinearizeTid
+      //---
+      draw_element(ps[ownTid].effectiveRix, ps[ownTid].effectiveIx)
+      //---
+      ps[ownTid].elementLowPhase             = ps[ownTid].statePhase
+      ps[ownTid].elementLowEnqueue           = ps[ownTid].stateEnqueue
+      ps[ownTid].elementLowFullEmpty         = ps[ownTid].isNowFullOrEmpty
+      ps[ownTid].elementLowFullEmptyFinished = false
+      ps[ownTid].elementLowRound             = (ps[ownTid].isNowFullOrEmpty ? ps[ownTid].elementLowRound : ps[ownTid].effectiveRound)
+      ps[ownTid].elementLowDirty             = (ps[ownTid].isNowFullOrEmpty ? ps[ownTid].elementLowDirty : true)
+      ps[ownTid].elementLowTid               = ps[ownTid].helpLinearizeTid
+      if (ps[ownTid].stateEnqueue) {
+        if (ps[ownTid].isNowFullOrEmpty) {
+          assert(11120, MAXIMUM_CAPACITY == (cntEnqueued - cntDequeued))
+          assert(11130, "undefined" !== typeof rings[CNT_ALLOWED_EXTENSIONS])
+        } else {
+          linearizationOrder[cntEnqueued] = ps[ownTid].stateValue
+          cntEnqueued ++
+        }
+      } else {
+        if (ps[ownTid].isNowFullOrEmpty) {
+          assert(11140, cntEnqueued == cntDequeued)
+        } else {
+          assert(11150, linearizationOrder[cntDequeued] == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highValue)
+          cntDequeued ++
+        }
+      }
+      if (ps[ownTid].isNowFullOrEmpty) ps[ownTid].nextStep = "help_full_empty_cas_state"
+      else ps[ownTid].nextStep = "help_finish_read_element_high"
+    } else {
+      casFailedMessage = "Element (low) CAS failed"
+      ps[ownTid].elementLowPhase             = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowPhase
+      ps[ownTid].elementLowEnqueue           = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowEnqueue
+      ps[ownTid].elementLowFullEmpty         = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowFullEmpty
+      ps[ownTid].elementLowFullEmptyFinished = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowFullEmptyFinished
+      ps[ownTid].elementLowRound             = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowRound
+      ps[ownTid].elementLowDirty             = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowDirty
+      ps[ownTid].elementLowTid               = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowTid
+      if (ps[ownTid].elementLowFullEmpty) {
+        if (ps[ownTid].elementLowEnqueue) assert(11160, (ps[ownTid].effectiveRound <= (1 + ps[ownTid].elementLowRound)) && ps[ownTid].elementLowDirty)
+        else assert(11165, (ps[ownTid].effectiveRound <= (1 + ps[ownTid].elementLowRound)) || (false == ps[ownTid].elementLowDirty))
+      } else {
+        if (ps[ownTid].stateEnqueue && ps[ownTid].isNowFullOrEmpty) assert(11170, (ps[ownTid].effectiveRound <= (1 + ps[ownTid].elementLowRound)) && ps[ownTid].elementLowDirty)
+        else if ((false == ps[ownTid].stateEnqueue) && ps[ownTid].isNowFullOrEmpty) assert(11175, (ps[ownTid].effectiveRound <= ps[ownTid].elementLowRound) && ps[ownTid].elementLowDirty)
+        else assert(11180, (ps[ownTid].effectiveRound <= ps[ownTid].elementLowRound) && ps[ownTid].elementLowDirty)
+      }
+      if (ps[ownTid].elementLowFullEmpty && (false == ps[ownTid].elementLowFullEmptyFinished)) {
+        if (ps[ownTid].statePhase != ps[ownTid].elementLowPhase) ps[ownTid].nextStep = "help_full_empty_re_read_state"
+        else ps[ownTid].nextStep = "help_full_empty_cas_state"
+        return
+      } else if (ps[ownTid].elementLowFullEmpty && ps[ownTid].elementLowFullEmptyFinished) {
+        assert(11185, (false == state[ps[ownTid].elementLowTid].pending) || (ps[ownTid].elementLowPhase < state[ps[ownTid].elementLowTid].phase))
+        ps[ownTid].nextStep = "read_helpee_state"
+        return
+      }
+      if (ps[ownTid].effectiveRound != ps[ownTid].elementLowRound) {
+        ps[ownTid].origEffectiveRound = ps[ownTid].elementLowRound
+        ps[ownTid].effectiveRound = ps[ownTid].elementLowRound
+      }
+      if ((false == ps[ownTid].stateEnqueue) && (ps[ownTid].elementLowEnqueue)) ps[ownTid].needReReadReader = true
+      if (ps[ownTid].statePhase != ps[ownTid].elementLowPhase) ps[ownTid].nextStep = "help_finish_re_read_state"
+      else ps[ownTid].nextStep = "help_finish_read_element_high"
+    }
+  }
+
+  atomicSteps["help_finish_re_read_state"] = function (ownTid) {
+    assert(11200, ps[ownTid].statePhase != ps[ownTid].elementLowPhase)
+    ps[ownTid].stateValue       = state[ps[ownTid].elementLowTid].value
+    ps[ownTid].statePhase       = state[ps[ownTid].elementLowTid].phase
+    ps[ownTid].stateEnqueue     = state[ps[ownTid].elementLowTid].enqueue
+    ps[ownTid].stateFullOrEmpty = state[ps[ownTid].elementLowTid].fullOrEmpty
+    ps[ownTid].statePending     = state[ps[ownTid].elementLowTid].pending
+    ps[ownTid].stateInProgress  = state[ps[ownTid].elementLowTid].inProgress
+    assert(11210, ps[ownTid].elementLowPhase <= ps[ownTid].statePhase)
+    ps[ownTid].nextStep = "help_finish_read_element_high"
+  }
+
+  atomicSteps["help_finish_read_element_high"] = function (ownTid) {
+    ps[ownTid].elementHighValue       = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highValue
+    ps[ownTid].elementHighRound       = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highRound
+    ps[ownTid].elementHighDirty       = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highDirty
+    ps[ownTid].elementHighDivertToRix = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highDivertToRix
+    if (ps[ownTid].elementLowPhase != ps[ownTid].statePhase) {
+      ps[ownTid].nextStep = "help_finish_extension"
+      return
+    }
+    assert(11300, ps[ownTid].elementLowEnqueue == ps[ownTid].stateEnqueue)
+    if (false == ps[ownTid].statePending) {
+      ps[ownTid].nextStep = "help_finish_extension"
+      return
+    }
+    if (ps[ownTid].elementLowEnqueue) {
+      assert(11310, (ps[ownTid].effectiveRound <= (1 + ps[ownTid].elementHighRound)) || (false == ps[ownTid].elementHighDirty))
+      if ((ps[ownTid].effectiveRound != (1 + ps[ownTid].elementHighRound)) && ps[ownTid].elementHighDirty) ps[ownTid].nextStep = "help_finish_cas_state"
+      else if (ps[ownTid].needReReadReader) ps[ownTid].nextStep = "help_finish_re_read_reader"
+      else ps[ownTid].nextStep = "help_finish_check_if_new_diversion"
+    } else {
+      assert(11320, true == ps[ownTid].elementHighDirty)
+      assert(11330, ps[ownTid].effectiveRound <= ps[ownTid].elementHighRound)
+      if (ps[ownTid].effectiveRound != ps[ownTid].elementHighRound) {
+        assert(11340, (false == state[ps[ownTid].elementLowTid].pending) || (ps[ownTid].elementLowPhase < state[ps[ownTid].elementLowTid].phase))
+        ps[ownTid].nextStep = "read_helpee_state"
+      } else ps[ownTid].nextStep = "help_finish_cas_state"
+    }
+  }
+
+  atomicSteps["help_finish_re_read_reader"] = function (ownTid) {
+    ps[ownTid].oppositeRound = readerPositionRound
+    ps[ownTid].oppositeRix   = readerPositionRix
+    ps[ownTid].oppositeIx    = readerPositionIx
+    assert(11400, ps[ownTid].oppositeIx < (FIRST_ARRAY_SIZE << ps[ownTid].oppositeRix))
+    assert(11410, ps[ownTid].effectiveRound <= (1 + ps[ownTid].oppositeRound))
+    ps[ownTid].nextStep = "help_finish_check_if_new_diversion"
+  }
+
+  atomicSteps["help_finish_check_if_new_diversion"] = function (ownTid) {
+    assert(11500, ps[ownTid].elementLowEnqueue)
+    if (0 == ps[ownTid].elementHighDivertToRix) {
+      let testNextWriterRix = ps[ownTid].effectiveRix
+      let testNextWriterIx  = (1 + ps[ownTid].effectiveIx)
+      for (;;) {
+        if ((FIRST_ARRAY_SIZE << testNextWriterRix) == testNextWriterIx) {
+          if (0 == testNextWriterRix) {
+            testNextWriterRix = 0
+            testNextWriterIx  = 0
+            break
+          } else {
+            let tmpRix = testNextWriterRix
+            testNextWriterRix = diversions[tmpRix - 1].rix
+            testNextWriterIx  = (1 + diversions[tmpRix - 1].ix)
+          }
+        } else break
+      }
+      for (;;) {
+        assert(11510, (FIRST_ARRAY_SIZE << testNextWriterRix) != testNextWriterIx)
+        if ((ps[ownTid].oppositeRix == testNextWriterRix) && (ps[ownTid].oppositeIx == testNextWriterIx)) {
+          ps[ownTid].nextStep = "help_finish_check_if_new_diversion_yes"
+          break
+        } else if (0 == rings[testNextWriterRix][testNextWriterIx].highDivertToRix) {
+          ps[ownTid].nextStep = "help_finish_cas_element_high"
+          break
+        } else {
+          testNextWriterRix = rings[testNextWriterRix][testNextWriterIx].highDivertToRix
+          testNextWriterIx = 0
+          if ("undefined" === typeof rings[testNextWriterRix]) {
+            ps[ownTid].elementCasAssert = false
+            ps[ownTid].nextStep = "help_finish_cas_element_high"
+            break
+          }
+        }
+      }
+    } else {
+      ps[ownTid].nextStep = "help_finish_cas_element_high"
+    }
+  }
+
+  atomicSteps["help_finish_check_if_new_diversion_yes"] = function (ownTid) {
+    assert(11600, 0 == ps[ownTid].divertToRixNew)
+    for (;;) {
+      if ("undefined" === typeof rings[ps[ownTid].divertToRixNew]) {
+        break
+      } else if (ps[ownTid].divertToRixNew == CNT_ALLOWED_EXTENSIONS) {
+        ps[ownTid].divertToRixNew = 0
+        break
+      } else {
+        ps[ownTid].divertToRixNew ++
+      }
+    }
+    ps[ownTid].nextStep = "help_finish_cas_element_high"
+  }
+
+  atomicSteps["help_finish_cas_element_high"] = function (ownTid) {
+    assert(11700, ps[ownTid].elementLowEnqueue)
+    assert(11710, (ps[ownTid].effectiveRound == (1 + ps[ownTid].elementHighRound)) || (false == ps[ownTid].elementHighDirty))
+    assert(11720, (0 == ps[ownTid].divertToRixNew) || (0 == ps[ownTid].elementHighDivertToRix))
+    if ((ps[ownTid].elementHighValue       == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highValue)
+     && (ps[ownTid].elementHighRound       == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highRound)
+     && (ps[ownTid].elementHighDirty       == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highDirty)
+     && (ps[ownTid].elementHighDivertToRix == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highDivertToRix)) {
+      casSucceededMessage = "Element (high) CAS succeeded"
+      assert(11730, ps[ownTid].elementCasAssert)
+      ps[ownTid].sawElementLowTidAlive = true
+      rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highValue       = ps[ownTid].stateValue
+      rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highRound       = ps[ownTid].effectiveRound
+      rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highDirty       = true
+      rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highDivertToRix = (ps[ownTid].divertToRixNew | ps[ownTid].elementHighDivertToRix)
+      //---
+      rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].full = true
+      draw_element(ps[ownTid].effectiveRix, ps[ownTid].effectiveIx)
+      //---
+      ps[ownTid].elementHighValue       = ps[ownTid].stateValue
+      ps[ownTid].elementHighRound       = ps[ownTid].effectiveRound
+      ps[ownTid].elementHighDirty       = true
+      ps[ownTid].elementHighDivertToRix = (ps[ownTid].divertToRixNew | ps[ownTid].elementHighDivertToRix)
+    } else {
+      casFailedMessage = "Element (high) CAS failed"
+      ps[ownTid].elementHighValue       = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highValue
+      ps[ownTid].elementHighRound       = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highRound
+      ps[ownTid].elementHighDirty       = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highDirty
+      ps[ownTid].elementHighDivertToRix = rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].highDivertToRix
+      assert(11740, true == ps[ownTid].elementHighDirty)
+      assert(11750, ps[ownTid].effectiveRound <= ps[ownTid].elementHighRound)
+    }
+    ps[ownTid].nextStep = "help_finish_cas_state"
+  }
+
+  atomicSteps["help_finish_cas_state"] = function (ownTid) {
+    assert(11800, ps[ownTid].elementLowPhase == ps[ownTid].statePhase)
+    assert(11810, ps[ownTid].elementLowEnqueue == ps[ownTid].stateEnqueue)
+    assert(11820, false == ps[ownTid].stateFullOrEmpty)
+    assert(11830, true == ps[ownTid].statePending)
+    assert(11840, true == ps[ownTid].stateInProgress)
+    if (ps[ownTid].elementLowEnqueue) {
+      if ((ps[ownTid].statePhase       == state[ps[ownTid].elementLowTid].phase)
+       && (ps[ownTid].stateEnqueue     == state[ps[ownTid].elementLowTid].enqueue)
+       && (ps[ownTid].stateFullOrEmpty == state[ps[ownTid].elementLowTid].fullOrEmpty)
+       && (ps[ownTid].statePending     == state[ps[ownTid].elementLowTid].pending)
+       && (ps[ownTid].stateInProgress  == state[ps[ownTid].elementLowTid].inProgress)) {
+        casSucceededMessage = "State CAS succeeded"
+        assert(11850, ps[ownTid].stateValue == state[ps[ownTid].elementLowTid].value)
+        ps[ownTid].sawElementLowTidAlive = true
+        state[ps[ownTid].elementLowTid].pending = false
+        ps[ownTid].statePending = false
+        //---
+        draw_state(ps[ownTid].elementLowTid)
+        //---
+      } else {
+        casFailedMessage = "State CAS failed"
+        assert(11860, (false == state[ps[ownTid].elementLowTid].pending) || (ps[ownTid].statePhase < state[ps[ownTid].elementLowTid].phase))
+        ps[ownTid].stateValue       = -2
+        ps[ownTid].statePhase       = state[ps[ownTid].elementLowTid].phase
+        ps[ownTid].stateEnqueue     = state[ps[ownTid].elementLowTid].enqueue
+        ps[ownTid].stateFullOrEmpty = state[ps[ownTid].elementLowTid].fullOrEmpty
+        ps[ownTid].statePending     = state[ps[ownTid].elementLowTid].pending
+        ps[ownTid].stateInProgress  = state[ps[ownTid].elementLowTid].inProgress
+      }
+    } else {
+      if ((ps[ownTid].stateValue       == state[ps[ownTid].elementLowTid].value)
+       && (ps[ownTid].statePhase       == state[ps[ownTid].elementLowTid].phase)
+       && (ps[ownTid].stateEnqueue     == state[ps[ownTid].elementLowTid].enqueue)
+       && (ps[ownTid].stateFullOrEmpty == state[ps[ownTid].elementLowTid].fullOrEmpty)
+       && (ps[ownTid].statePending     == state[ps[ownTid].elementLowTid].pending)
+       && (ps[ownTid].stateInProgress  == state[ps[ownTid].elementLowTid].inProgress)) {
+        casSucceededMessage = "State CAS succeeded"
+        assert(11870, linearizationOrder[cntDequeued - 1] == ps[ownTid].elementHighValue)
+        ps[ownTid].sawElementLowTidAlive = true
+        state[ps[ownTid].elementLowTid].value = ps[ownTid].elementHighValue
+        state[ps[ownTid].elementLowTid].pending = false
+        ps[ownTid].stateValue = ps[ownTid].elementHighValue
+        ps[ownTid].statePending = false
+        //---
+        rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].full = false
+        draw_element(ps[ownTid].effectiveRix, ps[ownTid].effectiveIx)
+        draw_state(ps[ownTid].elementLowTid)
+        //---
+      } else {
+        casFailedMessage = "State CAS failed"
+        assert(11880, (false == state[ps[ownTid].elementLowTid].pending) || (ps[ownTid].statePhase < state[ps[ownTid].elementLowTid].phase))
+        ps[ownTid].stateValue       = state[ps[ownTid].elementLowTid].value
+        ps[ownTid].statePhase       = state[ps[ownTid].elementLowTid].phase
+        ps[ownTid].stateEnqueue     = state[ps[ownTid].elementLowTid].enqueue
+        ps[ownTid].stateFullOrEmpty = state[ps[ownTid].elementLowTid].fullOrEmpty
+        ps[ownTid].statePending     = state[ps[ownTid].elementLowTid].pending
+        ps[ownTid].stateInProgress  = state[ps[ownTid].elementLowTid].inProgress
+      }
+    }
+    ps[ownTid].nextStep = "help_finish_extension"
+  }
+
+  atomicSteps["help_finish_extension"] = function (ownTid) {
+    if ((0 == ps[ownTid].elementHighDivertToRix) || ("undefined" !== typeof rings[ps[ownTid].elementHighDivertToRix])) {
+      ps[ownTid].nextStep = "help_finish_cas_effective_position"
+    } else {
+      ps[ownTid].nextStep = "help_finish_extension_part_1"
+    }
+  }
+
+  atomicSteps["help_finish_extension_part_1"] = function (ownTid) {
+    if ((0 == diversions[ps[ownTid].elementHighDivertToRix - 1].rix)
+     && (0 == diversions[ps[ownTid].elementHighDivertToRix - 1].ix))
+    {
+      casSucceededMessage = "diversions[" + ps[ownTid].elementHighDivertToRix + " - 1] CAS succeeded"
+      if ((0 == ps[ownTid].effectiveRix) && (0 == ps[ownTid].effectiveIx) && diversion_0_0_drawn) {
+        casRemarkMessage = "(may succeed multiple times for diversion at (0,0))"
+      }
+      for (let tmpRix = 1; tmpRix <= CNT_ALLOWED_EXTENSIONS; tmpRix ++) {
+        assert(12000, (diversions[tmpRix - 1].rix != ps[ownTid].effectiveRix)
+                   || (diversions[tmpRix - 1].ix  != ps[ownTid].effectiveIx)
+                   || ((0 == ps[ownTid].effectiveRix) && (0 == ps[ownTid].effectiveIx)))
+      }
+      diversions[ps[ownTid].elementHighDivertToRix - 1].rix = ps[ownTid].effectiveRix
+      diversions[ps[ownTid].elementHighDivertToRix - 1].ix  = ps[ownTid].effectiveIx
+      //---
+      draw_diversion(ps[ownTid].elementHighDivertToRix, ps[ownTid].effectiveRix, ps[ownTid].effectiveIx)
+      //---
+    } else {
+      casFailedMessage = "diversions[" + ps[ownTid].elementHighDivertToRix + " - 1] CAS failed"
+      assert(12010, (diversions[ps[ownTid].elementHighDivertToRix - 1].rix == ps[ownTid].effectiveRix)
+                 && (diversions[ps[ownTid].elementHighDivertToRix - 1].ix  == ps[ownTid].effectiveIx))
+    }
+    ps[ownTid].nextStep = "help_finish_extension_part_2"
+  }
+
+  atomicSteps["help_finish_extension_part_2"] = function (ownTid) {
+    if ("undefined" === typeof rings[ps[ownTid].elementHighDivertToRix]) {
+      casSucceededMessage = "rings[" + ps[ownTid].elementHighDivertToRix + "] CAS succeeded"
+      for (let tmpRix = 0; tmpRix <= CNT_ALLOWED_EXTENSIONS; tmpRix ++) {
+        assert(12100, ("undefined" === typeof rings[tmpRix])
+                   || (rings[tmpRix].length != (FIRST_ARRAY_SIZE << ps[ownTid].elementHighDivertToRix)))
+      }
+      set_ring(ps[ownTid].elementHighDivertToRix)
+    } else {
+      casFailedMessage = "rings[" + ps[ownTid].elementHighDivertToRix + "] CAS failed"
+      assert(12110, rings[ps[ownTid].elementHighDivertToRix].length == (FIRST_ARRAY_SIZE << ps[ownTid].elementHighDivertToRix))
+    }
+    ps[ownTid].nextStep = "help_finish_cas_effective_position"
+  }
+
+  atomicSteps["help_finish_cas_effective_position"] = function (ownTid) {
+    if (0 != ps[ownTid].elementHighDivertToRix) {
+      ps[ownTid].effectiveRix = ps[ownTid].elementHighDivertToRix
+      ps[ownTid].effectiveIx  = 0
+    } else {
+      ps[ownTid].effectiveIx ++
+      for (; ((FIRST_ARRAY_SIZE << ps[ownTid].effectiveRix) == ps[ownTid].effectiveIx) ;) {
+        if (0 == ps[ownTid].effectiveRix) {
+          ps[ownTid].effectiveRound ++
+          ps[ownTid].effectiveRix = 0
+          ps[ownTid].effectiveIx  = 0
+          break
+        } else {
+          let tmpRix = ps[ownTid].effectiveRix
+          ps[ownTid].effectiveRix = diversions[tmpRix - 1].rix
+          ps[ownTid].effectiveIx  = (1 + diversions[tmpRix - 1].ix)
+        }
+      }
+    }
+    if ((ps[ownTid].elementLowEnqueue)
+     && ((1 + readerPositionRound) == ps[ownTid].effectiveRound)
+     && (readerPositionRix == ps[ownTid].effectiveRix)
+     && (readerPositionIx == ps[ownTid].effectiveIx)
+     && ("undefined" === typeof rings[CNT_ALLOWED_EXTENSIONS])) assert(12200, false)
+    assert(12210, ps[ownTid].effectiveIx < (FIRST_ARRAY_SIZE << ps[ownTid].effectiveRix))
+    if (ps[ownTid].elementLowEnqueue) {
+      if ((ps[ownTid].origEffectiveRound == writerPositionRound)
+       && (ps[ownTid].origEffectiveRix   == writerPositionRix)
+       && (ps[ownTid].origEffectiveIx    == writerPositionIx)) {
+        casSucceededMessage = "Writer position CAS succeeded"
+        writerPositionRound = ps[ownTid].effectiveRound
+        writerPositionRix   = ps[ownTid].effectiveRix
+        writerPositionIx    = ps[ownTid].effectiveIx
+        assert(12220, ps[ownTid].elementHighDivertToRix == rings[ps[ownTid].origEffectiveRix][ps[ownTid].origEffectiveIx].highDivertToRix)
+        //---
+        draw_element(ps[ownTid].origEffectiveRix, ps[ownTid].origEffectiveIx)
+        draw_element(ps[ownTid].effectiveRix, ps[ownTid].effectiveIx)
+        draw_positions()
+        //---
+      } else {
+        casFailedMessage = "Writer position CAS failed"
+        ps[ownTid].effectiveRound = writerPositionRound
+        ps[ownTid].effectiveRix   = writerPositionRix
+        ps[ownTid].effectiveIx    = writerPositionIx
+      }
+      ps[ownTid].origEffectiveRound = ps[ownTid].effectiveRound
+      ps[ownTid].origEffectiveRix   = ps[ownTid].effectiveRix
+      ps[ownTid].origEffectiveIx    = ps[ownTid].effectiveIx
+      ps[ownTid].enqueueEffectiveSkip = true
+    } else {
+      if ((ps[ownTid].origEffectiveRound == readerPositionRound)
+       && (ps[ownTid].origEffectiveRix   == readerPositionRix)
+       && (ps[ownTid].origEffectiveIx    == readerPositionIx)) {
+        casSucceededMessage = "Reader position CAS succeeded"
+        readerPositionRound = ps[ownTid].effectiveRound
+        readerPositionRix   = ps[ownTid].effectiveRix
+        readerPositionIx    = ps[ownTid].effectiveIx
+        assert(12230, ps[ownTid].elementHighDivertToRix == rings[ps[ownTid].origEffectiveRix][ps[ownTid].origEffectiveIx].highDivertToRix)
+        //---
+        draw_element(ps[ownTid].origEffectiveRix, ps[ownTid].origEffectiveIx)
+        draw_element(ps[ownTid].effectiveRix, ps[ownTid].effectiveIx)
+        draw_positions()
+        //---
+      } else {
+        casFailedMessage = "Reader position CAS failed"
+        ps[ownTid].effectiveRound = readerPositionRound
+        ps[ownTid].effectiveRix   = readerPositionRix
+        ps[ownTid].effectiveIx    = readerPositionIx
+      }
+      ps[ownTid].origEffectiveRound = ps[ownTid].effectiveRound
+      ps[ownTid].origEffectiveRix   = ps[ownTid].effectiveRix
+      ps[ownTid].origEffectiveIx    = ps[ownTid].effectiveIx
+      ps[ownTid].dequeueEffectiveSkip = true
+    }
+    assert(12240, (false == state[ps[ownTid].elementLowTid].pending) || (ps[ownTid].elementLowPhase < state[ps[ownTid].elementLowTid].phase))
+    assert(12250, (false == ps[ownTid].statePending) || (ps[ownTid].elementLowPhase < ps[ownTid].statePhase))
+    if (ps[ownTid].sawElementLowTidAlive) {
+      assert(12260, (false == state[ps[ownTid].elementLowTid].pending) || (ps[ownTid].ownPhase < state[ps[ownTid].elementLowTid].phase))
+      assert(12270, (false == ps[ownTid].statePending) || (ps[ownTid].ownPhase < ps[ownTid].statePhase))
+      if (ps[ownTid].helpLinearizeTid == ps[ownTid].elementLowTid) {
+        ps[ownTid].nextStep = "test_helpee_state"
+        return
+      }
+    }
+    ps[ownTid].nextStep = "read_helpee_state"
+  }
+
+  atomicSteps["help_full_empty_re_read_state"] = function (ownTid) {
+    assert(12300, ps[ownTid].statePhase != ps[ownTid].elementLowPhase)
+    ps[ownTid].stateValue       = -2
+    ps[ownTid].statePhase       = state[ps[ownTid].elementLowTid].phase
+    ps[ownTid].stateEnqueue     = state[ps[ownTid].elementLowTid].enqueue
+    ps[ownTid].stateFullOrEmpty = state[ps[ownTid].elementLowTid].fullOrEmpty
+    ps[ownTid].statePending     = state[ps[ownTid].elementLowTid].pending
+    ps[ownTid].stateInProgress  = state[ps[ownTid].elementLowTid].inProgress
+    assert(12310, ps[ownTid].elementLowPhase <= ps[ownTid].statePhase)
+    if (ps[ownTid].elementLowPhase != ps[ownTid].statePhase) {
+      ps[ownTid].nextStep = "help_full_empty_cas_element_low"
+      return
+    }
+    assert(12320, ps[ownTid].elementLowEnqueue == ps[ownTid].stateEnqueue)
+    if (false == ps[ownTid].statePending) {
+      ps[ownTid].nextStep = "help_full_empty_cas_element_low"
+      return
+    }
+    ps[ownTid].nextStep = "help_full_empty_cas_state"
+  }
+
+  atomicSteps["help_full_empty_cas_state"] = function (ownTid) {
+    assert(12400, ps[ownTid].elementLowPhase == ps[ownTid].statePhase)
+    assert(12410, ps[ownTid].elementLowEnqueue == ps[ownTid].stateEnqueue)
+    assert(12420, false == ps[ownTid].stateFullOrEmpty)
+    assert(12430, true == ps[ownTid].statePending)
+    assert(12440, true == ps[ownTid].stateInProgress)
+    if ((ps[ownTid].statePhase       == state[ps[ownTid].elementLowTid].phase)
+     && (ps[ownTid].stateEnqueue     == state[ps[ownTid].elementLowTid].enqueue)
+     && (ps[ownTid].stateFullOrEmpty == state[ps[ownTid].elementLowTid].fullOrEmpty)
+     && (ps[ownTid].statePending     == state[ps[ownTid].elementLowTid].pending)
+     && (ps[ownTid].stateInProgress  == state[ps[ownTid].elementLowTid].inProgress)) {
+      casSucceededMessage = "State CAS succeeded"
+      assert(12450, ps[ownTid].stateValue == state[ps[ownTid].elementLowTid].value)
+      ps[ownTid].sawElementLowTidAlive = true
+      state[ps[ownTid].elementLowTid].fullOrEmpty = true
+      state[ps[ownTid].elementLowTid].pending = false
+      ps[ownTid].stateFullOrEmpty = true
+      ps[ownTid].statePending = false
+      //---
+      draw_state(ps[ownTid].elementLowTid)
+      //---
+    } else {
+      casFailedMessage = "State CAS failed"
+      assert(12460, (false == state[ps[ownTid].elementLowTid].pending) || (ps[ownTid].statePhase < state[ps[ownTid].elementLowTid].phase))
+      ps[ownTid].stateValue       = -2
+      ps[ownTid].statePhase       = state[ps[ownTid].elementLowTid].phase
+      ps[ownTid].stateEnqueue     = state[ps[ownTid].elementLowTid].enqueue
+      ps[ownTid].stateFullOrEmpty = state[ps[ownTid].elementLowTid].fullOrEmpty
+      ps[ownTid].statePending     = state[ps[ownTid].elementLowTid].pending
+      ps[ownTid].stateInProgress  = state[ps[ownTid].elementLowTid].inProgress
+    }
+    ps[ownTid].nextStep = "help_full_empty_cas_element_low"
+  }
+
+  atomicSteps["help_full_empty_cas_element_low"] = function (ownTid) {
+    assert(12500, true == ps[ownTid].elementLowFullEmpty)
+    if ((ps[ownTid].elementLowPhase             == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowPhase)
+     && (ps[ownTid].elementLowEnqueue           == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowEnqueue)
+     && (ps[ownTid].elementLowFullEmpty         == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowFullEmpty)
+     && (ps[ownTid].elementLowFullEmptyFinished == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowFullEmptyFinished)
+     && (ps[ownTid].elementLowRound             == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowRound)
+     && (ps[ownTid].elementLowDirty             == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowDirty)
+     && (ps[ownTid].elementLowTid               == rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowTid)) {
+      casSucceededMessage = "Element (low) CAS succeeded"
+      rings[ps[ownTid].effectiveRix][ps[ownTid].effectiveIx].lowFullEmptyFinished = true
+      //---
+      draw_element(ps[ownTid].effectiveRix, ps[ownTid].effectiveIx)
+      //---
+    } else casFailedMessage = "Element (low) CAS failed"
+    assert(12510, (false == state[ps[ownTid].elementLowTid].pending) || (ps[ownTid].elementLowPhase < state[ps[ownTid].elementLowTid].phase))
+    assert(12520, (false == ps[ownTid].statePending) || (ps[ownTid].elementLowPhase < ps[ownTid].statePhase))
+    if (ps[ownTid].sawElementLowTidAlive) {
+      assert(12530, (false == state[ps[ownTid].elementLowTid].pending) || (ps[ownTid].ownPhase < state[ps[ownTid].elementLowTid].phase))
+      assert(12540, (false == ps[ownTid].statePending) || (ps[ownTid].ownPhase < ps[ownTid].statePhase))
+      if (ps[ownTid].helpLinearizeTid == ps[ownTid].elementLowTid) {
+        ps[ownTid].nextStep = "test_helpee_state"
+        return
+      }
+    }
+    ps[ownTid].nextStep = "read_helpee_state"
+  }
+
+  // ----------------------
+  function assert(assertionID, condition) {
+    if (false == condition) {
+      assertMessage += "*** Assertion " + assertionID + " failed ***"
+    }
+  }
+
+  function set_ring(rix) {
+    rings[rix] = []
+    for (let tmpIx = 0; tmpIx < (FIRST_ARRAY_SIZE << rix); tmpIx ++)
+    {
+      rings[rix][tmpIx] = {}
+      rings[rix][tmpIx].highValue = 0
+      rings[rix][tmpIx].highRound = 0
+      rings[rix][tmpIx].highDirty = 0
+      rings[rix][tmpIx].highDivertToRix = 0
+      rings[rix][tmpIx].lowPhase = 0
+      rings[rix][tmpIx].lowEnqueue = false
+      rings[rix][tmpIx].lowFullEmpty = false
+      rings[rix][tmpIx].lowFullEmptyFinished = false
+      rings[rix][tmpIx].lowRound = 0
+      rings[rix][tmpIx].lowDirty = false
+      rings[rix][tmpIx].lowTid = 0
+      //---
+      rings[rix][tmpIx].full = false
+      draw_element(rix, tmpIx)
+      //---
+    }
+    if (0 == rix) {
+      draw_implicit_return()
+    }
+  }
+
+  function show_process_state(tid, lastStep) {
+    let html = ""
+    if ("" != lastStep) {
+      html += "last: " + lastStep + "<br>"
+    }
+    if (ps[tid].hasOwnProperty("ownPhase")) {  // condense to one line to save space
+      html += "ownEnqueue = " + ps[tid].ownEnqueue + "    ownPhase = " + ps[tid].ownPhase + "<br>"
+    } else if (ps[tid].hasOwnProperty("ownEnqueue")) {
+      html += "ownEnqueue = " + ps[tid].ownEnqueue + "<br>"
+    }
+    if (ps[tid].hasOwnProperty("helpLinearizeTid")) {
+      html += "helpLinearizeTid = " + ps[tid].helpLinearizeTid + "<br>"
+    }
+    if (ps[tid].hasOwnProperty("stateInProgress")) {
+      html += "state = (" + ps[tid].stateInProgress + "," + ps[tid].statePending + ","
+                          + ps[tid].stateFullOrEmpty + "," + ps[tid].stateEnqueue + ","
+                          + ps[tid].statePhase + "," + ps[tid].stateValue + ")<br>"
+    }
+    if (ps[tid].hasOwnProperty("oppositeRound")) {  // condense to one line to save space
+      html += "origEffective = (" + ps[tid].origEffectiveRound + "," + ps[tid].origEffectiveRix + ","
+                                  + ps[tid].origEffectiveIx + ")    effective = ("
+                                  + ps[tid].effectiveRound + "," + ps[tid].effectiveRix + ","
+                                  + ps[tid].effectiveIx + ")    opposite = (" + ps[tid].oppositeRound + ","
+                                  + ps[tid].oppositeRix + "," + ps[tid].oppositeIx + ")<br>"
+    } else if (ps[tid].hasOwnProperty("origEffectiveRound")) {
+      html += "origEffective = (" + ps[tid].origEffectiveRound + "," + ps[tid].origEffectiveRix + ","
+                                  + ps[tid].origEffectiveIx + ")    effective = ("
+                                  + ps[tid].effectiveRound + "," + ps[tid].effectiveRix + ","
+                                  + ps[tid].effectiveIx + ")<br>"
+    }
+    if (ps[tid].hasOwnProperty("elementLowTid")) {
+      html += "elementLow = (" + ps[tid].elementLowTid + "," + ps[tid].elementLowDirty + ","
+                               + ps[tid].elementLowRound + "," + ps[tid].elementLowFullEmptyFinished + ","
+                               + ps[tid].elementLowFullEmpty + "," + ps[tid].elementLowEnqueue + ","
+                               + ps[tid].elementLowPhase + ")<br>"
+    }
+    if (ps[tid].hasOwnProperty("elementHighDivertToRix")) {
+      html += "elementHigh = (" + ps[tid].elementHighDivertToRix + "," + ps[tid].elementHighDirty + ","
+                                + ps[tid].elementHighRound + "," + ps[tid].elementHighValue + ")<br>"
+    }
+    if (ps[tid].hasOwnProperty("isNowFullOrEmpty")) {
+      html += "aux local = (" + ps[tid].isNowFullOrEmpty + "," + ps[tid].needReReadReader + ","
+                              + ps[tid].sawElementLowTidAlive + "," + ps[tid].divertToRixNew + ","
+                              + ps[tid].enqueueEffectiveSkip + "," + ps[tid].dequeueEffectiveSkip + ","
+                              + ps[tid].elementCasAssert + "," + ps[tid].cycles + ")<br>"
+    }
+    if ("" != assertMessage) {
+      html += "<span class=\"assertMessage\">" + assertMessage + "</span><br>"
+    }
+    if ("" != casFailedMessage) {
+      html += "<span class=\"casFailedMessage\">" + casFailedMessage + "</span><br>"
+    }
+    if ("" != casSucceededMessage) {
+      html += "<span class=\"casSucceededMessage\">" + casSucceededMessage + "</span><br>"
+    }
+    if ("" != casRemarkMessage) {
+      html += "<span class=\"casRemarkMessage\">" + casRemarkMessage + "</span><br>"
+    }
+    if ("" != linearizationPointMessage) {
+      html += "<span class=\"linearizationPointMessage\">" + linearizationPointMessage + "</span><br>"
+    }
+    if (ps[tid].hasOwnProperty("nextStep")) {
+      html += "next: <span class=\"nextStep\">" + ps[tid].nextStep + "</span>"
+    }
+    document.getElementById("process_desc_" + tid).innerHTML = html
+  }
+
+  function atomic_step(tid) {
+    casFailedMessage = ""
+    casSucceededMessage = ""
+    casRemarkMessage = ""
+    linearizationPointMessage = ""
+    let stepToExecute = ps[tid].nextStep
+    if ("operation_done" == stepToExecute) {
+      ps[tid] = {}
+    } else {
+      atomicSteps[stepToExecute](tid)
+      trail += "atomicSteps[\"" + stepToExecute + "\"](" + tid + ")  // "
+      trail += "writerPosition = (" + writerPositionRound + "," + writerPositionRix + "," + writerPositionIx + ") "
+      trail += "readerPosition = (" + readerPositionRound + "," + readerPositionRix + "," + readerPositionIx + ") "
+      if (ps[tid].hasOwnProperty("ownEnqueue")) {
+        trail += "ownEnqueue = " + ps[tid].ownEnqueue + " "
+      }
+      if (ps[tid].hasOwnProperty("ownPhase")) {
+        trail += "ownPhase = " + ps[tid].ownPhase + " "
+      }
+      if (ps[tid].hasOwnProperty("helpLinearizeTid")) {
+        trail += "helpLinearizeTid = " + ps[tid].helpLinearizeTid + " "
+      }
+      if (ps[tid].hasOwnProperty("stateInProgress")) {
+        trail += "state = (" + ps[tid].stateInProgress + "," + ps[tid].statePending + ","
+                             + ps[tid].stateFullOrEmpty + "," + ps[tid].stateEnqueue + ","
+                             + ps[tid].statePhase + "," + ps[tid].stateValue + ") "
+      }
+      if (ps[tid].hasOwnProperty("origEffectiveRound")) {
+        trail += "origEffective = (" + ps[tid].origEffectiveRound + "," + ps[tid].origEffectiveRix + ","
+                                     + ps[tid].origEffectiveIx + ") effective = ("
+                                     + ps[tid].effectiveRound + "," + ps[tid].effectiveRix + ","
+                                     + ps[tid].effectiveIx + ") "
+      }
+      if (ps[tid].hasOwnProperty("oppositeRound")) {
+        trail += "opposite = (" + ps[tid].oppositeRound + "," + ps[tid].oppositeRix + ","
+                                + ps[tid].oppositeIx + ") "
+      }
+      if (ps[tid].hasOwnProperty("elementLowTid")) {
+        trail += "elementLow = (" + ps[tid].elementLowTid + "," + ps[tid].elementLowDirty + ","
+                                  + ps[tid].elementLowRound + "," + ps[tid].elementLowFullEmptyFinished + ","
+                                  + ps[tid].elementLowFullEmpty + "," + ps[tid].elementLowEnqueue + ","
+                                  + ps[tid].elementLowPhase + ") "
+      }
+      if (ps[tid].hasOwnProperty("elementHighDivertToRix")) {
+        trail += "elementHigh = (" + ps[tid].elementHighDivertToRix + "," + ps[tid].elementHighDirty + ","
+                                   + ps[tid].elementHighRound + "," + ps[tid].elementHighValue + ") "
+      }
+      if (ps[tid].hasOwnProperty("isNowFullOrEmpty")) {
+        trail += "aux local = (" + ps[tid].isNowFullOrEmpty + "," + ps[tid].needReReadReader + ","
+                                 + ps[tid].sawElementLowTidAlive + "," + ps[tid].divertToRixNew + ","
+                                 + ps[tid].enqueueEffectiveSkip + "," + ps[tid].dequeueEffectiveSkip + ","
+                                 + ps[tid].elementCasAssert + "," + ps[tid].cycles + ") "
+      }
+      if ("" != assertMessage) {
+        trail += "<span class=\"assertMessage\">" + assertMessage + "</span> "
+      }
+      if ("" != casFailedMessage) {
+        trail += "<span class=\"casFailedMessage\">" + casFailedMessage + "</span> "
+      }
+      if ("" != casSucceededMessage) {
+        trail += "<span class=\"casSucceededMessage\">" + casSucceededMessage + "</span> "
+      }
+      if ("" != casRemarkMessage) {
+        trail += "<span class=\"casRemarkMessage\">" + casRemarkMessage + "</span> "
+      }
+      if ("" != linearizationPointMessage) {
+        trail += "<span class=\"linearizationPointMessage\">" + linearizationPointMessage + "</span> "
+      }
+      trail += "next: <span class=\"nextStep\">" + ps[tid].nextStep + "</span><br>"
+    }
+    show_process_state(tid, stepToExecute)
+  }
+
+  function enqueue_atomic_step(tid) {
+    document.getElementById("trail").innerHTML = ""
+    if ("undefined" === typeof ps[tid].nextStep) {
+      document.getElementById("deq_atom_step_" + tid).disabled = true
+      document.getElementById("deq_full_" + tid).disabled = true
+      casFailedMessage = ""
+      casSucceededMessage = ""
+      casRemarkMessage = ""
+      linearizationPointMessage = ""
+      ps[tid].ownEnqueue = true
+      ps[tid].nextStep = "get_own_phase"
+      show_process_state(tid, "")
+    } else {
+      atomic_step(tid)
+      if ("undefined" === typeof ps[tid].nextStep) {
+        document.getElementById("deq_atom_step_" + tid).disabled = false
+        document.getElementById("deq_full_" + tid).disabled = false
+      }
+    }
+  }
+
+  function enqueue_full(tid) {
+    document.getElementById("trail").innerHTML = ""
+    document.getElementById("enq_atom_step_" + tid).disabled = true
+    document.getElementById("enq_full_" + tid).disabled = true
+    disable_buttons(true)
+    enqueue_full_next_step(tid)
+  }
+
+  function enqueue_full_next_step(tid) {
+    enqueue_atomic_step(tid)
+    if ("undefined" !== typeof ps[tid].nextStep) {
+      setTimeout(enqueue_full_next_step, 200, tid)
+    } else {
+      document.getElementById("enq_atom_step_" + tid).disabled = false
+      document.getElementById("enq_full_" + tid).disabled = false
+      disable_buttons(false)
+    }
+  }
+
+  function dequeue_atomic_step(tid) {
+    document.getElementById("trail").innerHTML = ""
+    if ("undefined" === typeof ps[tid].nextStep) {
+      document.getElementById("enq_atom_step_" + tid).disabled = true
+      document.getElementById("enq_full_" + tid).disabled = true
+      casFailedMessage = ""
+      casSucceededMessage = ""
+      casRemarkMessage = ""
+      linearizationPointMessage = ""
+      ps[tid].ownEnqueue = false
+      ps[tid].nextStep = "get_own_phase"
+      show_process_state(tid, "")
+    } else {
+      atomic_step(tid)
+      if ("undefined" === typeof ps[tid].nextStep) {
+        document.getElementById("enq_atom_step_" + tid).disabled = false
+        document.getElementById("enq_full_" + tid).disabled = false
+      }
+    }
+  }
+
+  function dequeue_full(tid) {
+    document.getElementById("trail").innerHTML = ""
+    document.getElementById("deq_atom_step_" + tid).disabled = true
+    document.getElementById("deq_full_" + tid).disabled = true
+    disable_buttons(true)
+    dequeue_full_next_step(tid)
+  }
+
+  function dequeue_full_next_step(tid) {
+    dequeue_atomic_step(tid)
+    if ("undefined" !== typeof ps[tid].nextStep) {
+      setTimeout(dequeue_full_next_step, 200, tid)
+    } else {
+      document.getElementById("deq_atom_step_" + tid).disabled = false
+      document.getElementById("deq_full_" + tid).disabled = false
+      disable_buttons(false)
+    }
+  }
+
+  function random_finish_all() {
+    document.getElementById("trail").innerHTML = ""
+    disable_proc_buttons(true)
+    disable_buttons(true)
+    random_finish_all_next_step()
+  }
+
+  function random_finish_all_next_step() {
+    let tid = Math.floor(NUM_THRDS * Math.random()) % NUM_THRDS
+    let tmpTid = tid
+    for (;;) {
+      if ("undefined" !== typeof ps[tmpTid].nextStep) {
+        atomic_step(tmpTid)
+        setTimeout(random_finish_all_next_step, 200)
+        return
+      } else {
+        tmpTid = (1 + tmpTid) % NUM_THRDS
+        if (tid == tmpTid) {
+          disable_proc_buttons(false)
+          disable_buttons(false)
+          return
+        }
+      }
+    }
+  }
+
+  function show_trail() {
+    document.getElementById("trail").innerHTML = trail
+  }
+
+  function disable_proc_buttons(disabled) {
+    for (let i = 0; i <= NUM_THRDS - 1; i ++) {
+      document.getElementById("enq_atom_step_" + i).disabled = disabled
+      document.getElementById("enq_full_" + i).disabled = disabled
+      document.getElementById("deq_atom_step_" + i).disabled = disabled
+      document.getElementById("deq_full_" + i).disabled = disabled
+    }
+  }
+
+  function disable_buttons(disabled) {
+    document.getElementById("WFMAQ_1_2").disabled = disabled
+    document.getElementById("WFMAQ_2_2").disabled = disabled
+    document.getElementById("WFMAQ_5_0").disabled = disabled
+    document.getElementById("WFMAQ_1_0").disabled = disabled
+    document.getElementById("random_finish_all").disabled = disabled
+    document.getElementById("show_trail").disabled = disabled
+  }
+
+  // ----------------------
+  function start_again(firstArraySize, cntAllowedExtensions) {
+    FIRST_ARRAY_SIZE       = firstArraySize
+    CNT_ALLOWED_EXTENSIONS = cntAllowedExtensions
+    MAXIMUM_CAPACITY = (FIRST_ARRAY_SIZE << (1 + CNT_ALLOWED_EXTENSIONS)) - FIRST_ARRAY_SIZE
+    NUM_THRDS = 3
+
+    subcap.innerHTML = "Contains simplified versions of the algorithms" +
+      " (FIRST_ARRAY_SIZE = " + FIRST_ARRAY_SIZE +
+      ", CNT_ALLOWED_EXTENSIONS = " + CNT_ALLOWED_EXTENSIONS + ")"
+
+    nextPhase = 0
+    state = []
+    for (let tmpTid = 0; tmpTid <= NUM_THRDS - 1; tmpTid ++)
+    {
+      state[tmpTid] = {inProgress: false, pending: false, fullOrEmpty: false, enqueue: false, phase: 0, value: 0}
+    }
+
+    rings = []
+    diversions = []
+    for (let tmpRix = 1; tmpRix <= CNT_ALLOWED_EXTENSIONS; tmpRix ++)
+    {
+      diversions[tmpRix - 1] = { rix: 0, ix: 0 }
+    }
+    diversion_0_0_drawn = false
+    writerPositionRound = 0
+    writerPositionRix = 0
+    writerPositionIx = 0
+    readerPositionRound = 0
+    readerPositionRix = 0
+    readerPositionIx = 0
+
+    ps = [{}, {}, {}]
+
+    linearizationOrder = []
+    cntEnqueued = 0
+    cntDequeued = 0
+    assertMessage = ""
+    casFailedMessage = ""
+    casSucceededMessage = ""
+    casRemarkMessage = ""
+    linearizationPointMessage = ""
+    trail = "start_again(" + FIRST_ARRAY_SIZE + ", " + CNT_ALLOWED_EXTENSIONS + ")<br>"
+    document.getElementById("trail").innerHTML = ""
+
+    document.getElementById("process_desc_0").innerHTML = "<b>Process 0</b><br><br>"
+                                                        + "Tip: To get to an action quickly:<br>"
+                                                        + "Click <b>enq. atom. step</b><br>"
+                                                        + "at all three processes<br>"
+                                                        + "and then click <b>Random finish all</b>."
+    document.getElementById("process_desc_1").innerHTML = "<b>Process 1</b><br><br>"
+                                                        + "Tip: You can also go step-by-step<br>"
+                                                        + "by clicking <b>enq. atom. step</b><br>"
+                                                        + "and <b>deq. atom. step</b> to simulate<br>"
+                                                        + "various interleaves of the processes.<br><br>"
+                                                        + "Legend for state array: inProgress,pending,fullOrEmpty,enqueue,phase,value"
+    document.getElementById("process_desc_2").innerHTML = "<b>Process 2</b><br><br>"
+                                                        + "Tip: It is also possible to display<br>"
+                                                        + "the trail of the atomic steps<br>"
+                                                        + "for investigation of an<br>"
+                                                        + "eventual concurrency issue.<br><br>"
+                                                        + "Legend for element (high): round,value<br>"
+                                                        + "Legend for element (low): round,tid,phase"
+
+    if (0 == CNT_ALLOWED_EXTENSIONS) leftOff = 180
+    else if (1 == CNT_ALLOWED_EXTENSIONS) leftOff = 130
+    else leftOff = 80
+
+    disable_proc_buttons(false)
+    ctx.clearRect(0, 0, canv.width, canv.height)
+    for (let tmpTid = 0; tmpTid <= NUM_THRDS - 1; tmpTid ++)
+    {
+      draw_state(tmpTid)
+    }
+    set_ring(0)
+    draw_positions()
+  }
+  start_again(1,2)  // WFMAQ(1,2) is the default
+</script>
+<noscript>Sorry, your browser does not support JavaScript!</noscript>
+
+</body>
+</html>
+
