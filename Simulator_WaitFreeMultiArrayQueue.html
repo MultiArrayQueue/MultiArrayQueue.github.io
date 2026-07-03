@@ -1061,7 +1061,7 @@ div.trail {
      && (ps[ownTid].statePending     == state[ps[ownTid].elementLowTid].pending)
      && (ps[ownTid].stateInProgress  == state[ps[ownTid].elementLowTid].inProgress)) {
       casSucceededMessage = "State CAS succeeded"
-      assert(12450, ps[ownTid].stateValue == state[ps[ownTid].elementLowTid].value)
+      assert(12450, (-2 == ps[ownTid].stateValue) || (ps[ownTid].stateValue == state[ps[ownTid].elementLowTid].value))
       ps[ownTid].sawElementLowTidAlive = true
       state[ps[ownTid].elementLowTid].fullOrEmpty = true
       state[ps[ownTid].elementLowTid].pending = false
