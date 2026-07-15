@@ -481,11 +481,14 @@ div.trail {
       }
     } else {
       if (ps[ownTid].elementLowDirty && ps[ownTid].elementLowEnqueue) {
+        assert(10645, "undefined" !== typeof rings[CNT_ALLOWED_EXTENSIONS])
         assert(10650, ps[ownTid].effectiveRound == (1 + ps[ownTid].elementLowRound))
+        assert(10660, MAXIMUM_CAPACITY == (cntEnqueued - cntDequeued))
         ps[ownTid].isNowFullOrEmpty = true
         ps[ownTid].nextStep = "re_check_state_pending"
       } else if (ps[ownTid].elementLowDirty && (false == ps[ownTid].elementLowEnqueue)) {
         if ((ps[ownTid].effectiveRound == (1 + ps[ownTid].oppositeRound)) && (ps[ownTid].effectiveRix == ps[ownTid].oppositeRix) && (ps[ownTid].effectiveIx == ps[ownTid].oppositeIx)) {
+          assert(10670, "undefined" !== typeof rings[CNT_ALLOWED_EXTENSIONS])
           ps[ownTid].origEffectiveRound = ps[ownTid].oppositeRound
           ps[ownTid].effectiveRound = ps[ownTid].oppositeRound
           ps[ownTid].nextStep = "help_finish_re_read_state"
@@ -564,9 +567,11 @@ div.trail {
         } else ps[ownTid].nextStep = "re_check_state_pending"
       } else if (ps[ownTid].elementLowDirty && (false == ps[ownTid].elementLowEnqueue)) {
         assert(10950, ps[ownTid].effectiveRound == (1 + ps[ownTid].elementLowRound))
+        assert(10960, cntEnqueued == cntDequeued)
         ps[ownTid].isNowFullOrEmpty = true
         ps[ownTid].nextStep = "re_check_state_pending"
       } else {
+        assert(10970, cntEnqueued == cntDequeued)
         ps[ownTid].isNowFullOrEmpty = true
         ps[ownTid].nextStep = "re_check_state_pending"
       }
@@ -637,7 +642,6 @@ div.trail {
       if (ps[ownTid].stateEnqueue) {
         if (ps[ownTid].isNowFullOrEmpty) {
           assert(11120, MAXIMUM_CAPACITY == (cntEnqueued - cntDequeued))
-          assert(11130, "undefined" !== typeof rings[CNT_ALLOWED_EXTENSIONS])
         } else {
           linearizationOrder[cntEnqueued] = ps[ownTid].stateValue
           cntEnqueued ++
@@ -730,6 +734,7 @@ div.trail {
   }
 
   atomicSteps["help_finish_re_read_reader"] = function (ownTid) {
+    assert(11499, true == ps[ownTid].elementLowEnqueue)
     ps[ownTid].oppositeRound = readerPositionRound
     ps[ownTid].oppositeRix   = readerPositionRix
     ps[ownTid].oppositeIx    = readerPositionIx
