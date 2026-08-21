@@ -472,6 +472,9 @@ div.trail {
       if (ps[ownTid].effectiveRound != ps[ownTid].elementLowRound) {
         ps[ownTid].origEffectiveRound = ps[ownTid].elementLowRound
         ps[ownTid].effectiveRound = ps[ownTid].elementLowRound
+        if (ps[ownTid].elementLowEnqueue) {
+          ps[ownTid].needReReadReader = true
+        }
       }
       if (ps[ownTid].elementLowEnqueue) {
         if (ps[ownTid].statePhase != ps[ownTid].elementLowPhase) ps[ownTid].nextStep = "help_finish_re_read_state"
@@ -1226,6 +1229,9 @@ div.trail {
       ps[tid] = {}
     } else {
       atomicSteps[stepToExecute](tid)
+      if ("get_own_phase" == stepToExecute) {
+        trail += "ps[" + tid + "].ownEnqueue = " + ps[tid].ownEnqueue + "<br>"
+      }
       trail += "atomicSteps[\"" + stepToExecute + "\"](" + tid + ")  // "
       trail += "writerPosition = (" + writerPositionRound + "," + writerPositionRix + "," + writerPositionIx + ") "
       trail += "readerPosition = (" + readerPositionRound + "," + readerPositionRix + "," + readerPositionIx + ") "
