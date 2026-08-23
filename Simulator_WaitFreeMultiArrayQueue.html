@@ -688,6 +688,9 @@ div.trail {
       if (ps[ownTid].effectiveRound != ps[ownTid].elementLowRound) {
         ps[ownTid].origEffectiveRound = ps[ownTid].elementLowRound
         ps[ownTid].effectiveRound = ps[ownTid].elementLowRound
+        if (ps[ownTid].elementLowEnqueue) {
+          ps[ownTid].needReReadReader = true
+        }
       }
       if ((false == ps[ownTid].stateEnqueue) && (ps[ownTid].elementLowEnqueue)) ps[ownTid].needReReadReader = true
       if (ps[ownTid].statePhase != ps[ownTid].elementLowPhase) ps[ownTid].nextStep = "help_finish_re_read_state"
